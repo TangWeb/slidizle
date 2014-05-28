@@ -1,0 +1,14 @@
+{
+	"name"                       : "Slidizle",
+	"description"                : "jQuery plugin for creating custom slideshow",
+	"version"                    : "1.2.4",
+	"main"                       : "js/jquery.slidizle.js",
+	"repository"                 : {
+		"type"                   : "git",
+		"url"                    : "git@github.com:olivierbossel/slidizle.git"
+	},
+	"author"                     : "Olivier Bossel <olivier.bossel@gmail.com>",
+	"license"                    : "MIT",
+	"dependencies"               : {},
+	"devDependencies"            : {}
+}
