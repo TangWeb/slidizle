@@ -5,8 +5,8 @@
  *
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
- * @updated 03.06.2013
- * @version	1.2.2
+ * @updated 	02.12.2013
+ * @version	1.2.4
  */
 jQuery(function($) {
 	
@@ -18,36 +18,41 @@ jQuery(function($) {
 		// vars :
 		this.settings = {
 			classes : {
-				content 				: 'slidizle-content', 		// class applied on content wrrapper
+				content 				: 'slidizle-content', 			// class applied on content wrrapper
 				next 					: 'slidizle-next',			// class applied on next element
-				previous 				: 'slidizle-previous',		// class applied on previous element
-				navigation 				: 'slidizle-navigation',	// class applied on navigation element
+				previous 				: 'slidizle-previous',			// class applied on previous element
+				navigation 				: 'slidizle-navigation',			// class applied on navigation element
 				timer 					: 'slidizle-timer',			// class applied on timer element
 				slide 					: 'slidizle-slide',			// class applied on each slide
-				play 					: 'play',					// the play class applied on the container
-				pause 		 			: 'pause',					// the pause class applied on the container
-				stop 					: 'stop',					// the stop class applied on the container
+				play 					: 'played',				// the play class applied on the container
+				pause 		 			: 'paused',				// the pause class applied on the container
+				stop 					: 'stoped',				// the stop class applied on the container
 				slider 					: 'slidizle',				// an class to access the slider
-				active 					: 'active',					// the className to add to active navigation, etc...
-				loading 				: 'loading'					// the className to add to the slider when it is in loading mode
+				active 					: 'active',				// the className to add to active navigation, etc...
+				loading 				: 'loading'				// the className to add to the slider when it is in loading mode
 			},
-			timeout					: null,						// the slider interval time between each medias
-			transition				: {							// save the transition options like duration, ease, etc...
+			timeout					: null,					// the slider interval time between each medias
+			
+			transition : {										// save the transition options like duration, ease, etc...
 				callback				: null,					// the name of the transition to use
 				duration				: 1000,
 				ease					: ''
 			},
-			pauseOnOver				: false,					// set if the slider has to make pause on hover
+			
+			pauseOnOver				: false,						// set if the slider has to make pause on hover
+			nextOnClick 				: false,						// set if the slider has to go next on mouse click
+			loop 					: false,						// set if the slider has to go first item when next on last
 			autoPlay				: true,						// set if the slider has to play directly or not
-			timerInterval			: 1000,						// save the interval for the timer refreshing
+			timerInterval				: 1000,						// save the interval for the timer refreshing
+			loadBeforeTransition 			: false, 						// specify if need to load the next content before the transition
 			onInit					: null,						// callback when the slider is inited
 			onClick					: null,						// callback when a slide is clicked
 			onChange				: null,						// callback when the slider change from one media to another
 			onNext					: null,						// callback when the slider change for the next slide
 			onPrevious				: null,						// callback when the slider change for the previous slide
 			onPlay					: null,						// callback when the slider change his state to play
-			onPause					: null,						// callback when the slider change his state to pause
-			onTimer					: null						// callback when the slider timeout progress.
+			onPause				: null,						// callback when the slider change his state to pause
+			onTimer				: null						// callback when the slider timeout progress.
 		};
 		this.$refs = {
 			slider					: null,						// save the reference to the slider container itself
@@ -60,19 +65,20 @@ jQuery(function($) {
 			timer 					: null						// save the reference to the timer element if exist
 		};
 		this.config = {
-			native_transitions		: [							// list of native transitions
+			native_transitions : [									// list of native transitions
 				'default', 'fade'
 			]
 		};
-		this.current_timeout_time = 0;							// save the current time of the timeout
+		this.current_timeout_time = 0;									// save the current time of the timeout
 		this.timer = null;										// save the timeout used as timer
-		this.timeout = null;									// save the timeout for playing slider
-		this.previous_index = 0;								// save the index of the previous media displayed
-		this.current_index = 0;									// save the index of the current media displayed
-		this.isPlaying = false;									// save the playing state
-		this.isOver = false;									// save the over state
+		this.timeout = null;										// save the timeout for playing slider
+		this.previous_index = 0;									// save the index of the previous media displayed
+		this.current_index = 0;										// save the index of the current media displayed
+		this.next_index = 0; 										// save the index of the next media
+		this.isPlaying = false;										// save the playing state
+		this.isOver = false;										// save the over state
 		this.total = 0;											// save the total number of element in the slider				
-		this.$this = $(item);									// save the jQuery item to access it
+		this.$this = $(item);										// save the jQuery item to access it
 		
 		// init :
 		this.init($(item), options); 
@@ -99,12 +105,22 @@ jQuery(function($) {
 
 		// save all references :
 		_this.$refs.slider = $this;
-		_this.$refs.content = $this.find('[data-slidizle-content]');
-		_this.$refs.navigation = $this.find('[data-slidizle-navigation]');
-		_this.$refs.previous = $this.find('[data-slidizle-previous]');
-		_this.$refs.next = $this.find('[data-slidizle-next]');
-		_this.$refs.timer = $this.find('[data-slidizle-timer]');
-		
+		_this.$refs.content = $this.find('[data-slidizle-content]').filter(function() {
+			return $(this).closest('[data-slidizle]').get(0) == _this.$this.get(0);
+		});
+		_this.$refs.navigation = $this.find('[data-slidizle-navigation]').filter(function() {
+			return $(this).closest('[data-slidizle]').get(0) == _this.$this.get(0);
+		});;
+		_this.$refs.previous = $this.find('[data-slidizle-previous]').filter(function() {
+			return $(this).closest('[data-slidizle]').get(0) == _this.$this.get(0);
+		});;
+		_this.$refs.next = $this.find('[data-slidizle-next]').filter(function() {
+			return $(this).closest('[data-slidizle]').get(0) == _this.$this.get(0);
+		});;
+		_this.$refs.timer = $this.find('[data-slidizle-timer]').filter(function() {
+			return $(this).closest('[data-slidizle]').get(0) == _this.$this.get(0);
+		});;
+
 		// apply class :
 		if (_this.$refs.content) _this.$refs.content.addClass(_this._getSetting('classes.content'));
 		if (_this.$refs.next) _this.$refs.next.addClass(_this._getSetting('classes.next'));
@@ -121,6 +137,7 @@ jQuery(function($) {
 		
 		// check if are some medias :
 		if (_this.$refs.medias) {
+
 			// add class on medias :
 			_this.$refs.medias.addClass(_this._getSetting('classes.slide'));
 
@@ -171,6 +188,14 @@ jQuery(function($) {
 
 			// play :
 			if (_this._getSetting('autoPlay') && _this.$refs.medias.length > 1) _this.play();
+
+			// check if next on click :
+			if (_this._getSetting('nextOnClick'))
+			{
+				_this.$refs.content.bind('click', function() {
+					_this.next();
+				});
+			}
 
 		}
 
@@ -284,6 +309,341 @@ jQuery(function($) {
 		}
 	}
 
+	/**
+	 * tick tick tick...
+	 */
+	slidizle.prototype._tick = function()
+	{
+		// vars :
+		var _this = this,
+			$this = _this.$this;
+
+		// update current timeout time :
+		_this.current_timeout_time -= _this._getSetting('timerInterval');
+
+		// call the onTimer callback :
+		if (_this._getSetting('onTimer')) {
+			var total_timeout = _this.$refs.current.data('slide-timeout') || _this._getSetting('timeout');
+			_this._getSetting('onTimer')(_this, _this.current_timeout_time, total_timeout);
+			$this.trigger('slidizle.timer', [_this, _this.current_timeout_time, total_timeout]);
+		}
+
+		// check current timeout time :
+		if (_this.current_timeout_time <= 0) {
+			// change media :
+			_this.next();
+		}
+	}
+			
+	/**
+	 * Managing the media change :
+	 */
+	slidizle.prototype._changeMedias = function()
+	{
+		// vars :
+		var _this = this,
+			$this = _this.$this;
+			
+		// clear timer (relaunchec on transition) :
+		clearInterval(_this.timer);
+		_this.timer = null;
+
+		// save the reference to the previous media displayed :
+		_this.$refs.previous = _this.$refs.current;
+	
+		// save the reference to the current media displayed :
+		_this.$refs.current = _this.$refs.content.children(':eq('+_this.current_index+')');
+
+		// save the reference to next media :
+		_this.$refs.next = _this.$refs.content.children(':eq('+_this.next_index+')');
+
+		// managing active class on the navigation :
+		var current_slide_id = _this.$refs.current.attr('data-slidizle-slide-id');
+
+		// manage navigation classes :
+		_this.$refs.navigation.each(function() {
+			var $nav = $(this),
+				current_navigation_by_slide_id = $(this).children('[data-slidizle-slide-id="'+current_slide_id+'"]');
+
+			if (current_slide_id && current_navigation_by_slide_id)
+			{
+				$nav.children().removeClass(_this._getSetting('classes.active'));
+				current_navigation_by_slide_id.addClass(_this._getSetting('classes.active'));
+			} else {
+				$nav.children().removeClass(_this._getSetting('classes.active'));
+				$nav.children(':eq('+_this.current_index+')').addClass(_this._getSetting('classes.active'));
+			}
+
+		});
+
+		// reset the timeout :
+		var t = _this.$refs.current.data('slide-timeout') || _this._getSetting('timeout');
+		if (t) {
+			_this.current_timeout_time = t;
+		}
+
+		// call the onTimer callback if exist :
+		if (_this._getSetting('onTimer') && _this._getSetting('timeout')) _this._getSetting('onTimer')(_this, _this.current_timeout_time, t);
+		$this.trigger('slidizle.timer', [_this, _this.current_timeout_time, t]);
+
+		// remove the class of the current media on the container :
+		if (_this.$refs.previous) _this.$this.removeClass('slide-'+_this.$refs.previous.index());
+
+		// set the class of the current media on the container :
+		_this.$this.addClass('slide-'+_this.$refs.current.index());
+
+		// add the loading clas to the slider :
+		_this.$refs.slider.addClass(_this._getSetting('classes.loading'));
+
+		// add load class on current element :
+		_this.$refs.current.addClass(_this._getSetting('classes.loading'));
+
+		// launch transition :
+		if ( ! _this._getSetting('loadBeforeTransition')) 
+		{
+			// launch transition directly :
+			launchTransition();
+		} else {
+			// load content of slide :
+			_this._loadSlide(_this.$refs.current, function($slide) {
+
+				// remove loading class
+				$slide.removeClass(_this._getSetting('classes.loading'));
+
+				// remove loading class :
+				_this.$refs.slider.removeClass(_this._getSetting('classes.loading'));
+
+				// launch transition if has to be launched after loading :
+				if (_this._getSetting('loadBeforeTransition')) launchTransition();
+			});
+		}
+
+		// launch transition and dispatch en change event :
+		function launchTransition()
+		{
+			// delete active_class before change :
+			_this.$refs.medias.removeClass(_this._getSetting('classes.active'));
+
+			// delete active_class before change :
+			_this.$refs.current.addClass(_this._getSetting('classes.active'));
+
+			// check transition type :
+			if (_this._getSetting('transition') && _this._isNativeTransition(_this._getSetting('transition.callback'))) _this._transition(_this._getSetting('transition.callback'));
+			else if (_this._getSetting('transition') && _this._getSetting('transition.callback')) _this._getSetting('transition.callback')(_this);
+			
+			// callback :
+			if (_this._getSetting('onChange')) _this._getSetting('onChange')(_this);
+			$this.trigger('slidizle.change', [_this]);
+
+			// manage onNext onPrevious events :
+			if (_this.$refs.current.index() == 0 && _this.$refs.previous)
+			{
+				if (_this.$refs.previous.index() == _this.$refs.medias.length-1) {
+					if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
+					$this.trigger('slidizle.next', [_this]);
+				} else {
+					if (_this._getSetting('onPrevious')) _this._getSetting('onPrevious')(_this);
+					$this.trigger('slidizle.previous', [_this]);
+				}
+			} else if (_this.$refs.current.index() == _this.$refs.medias.length-1 && _this.$refs.previous)
+			{
+				if (_this.$refs.previous.index() == 0) {
+					if (_this._getSetting('onPrevious')) _this._getSetting('onPrevious')(_this);
+					$this.trigger('slidizle.previous', [_this]);
+				} else {
+					if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
+					$this.trigger('slidizle.next', [_this]);
+				}
+			} else if (_this.$refs.previous) {
+				if (_this.$refs.current.index() > _this.$refs.previous.index()) {
+					if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
+					$this.trigger('slidizle.next', [_this]);
+				} else {
+					if (_this._getSetting('onPrevious')) _this._getSetting('onPrevious')(_this);
+					$this.trigger('slidizle.previous', [_this]);
+				}
+			} else {
+				if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
+				$this.trigger('slidizle.next', [_this]);
+			}
+
+			// init the timer :
+			if (_this._getSetting('timeout') && _this.$refs.medias.length > 1 && _this.isPlaying && !_this.timer) {
+				clearInterval(_this.timer);
+				_this.timer = setInterval(function() {
+					_this._tick();
+				}, _this._getSetting('timerInterval'));
+			}
+		}
+	}
+
+	/**
+	 * Load a slide :
+	 */
+	slidizle.prototype._loadSlide = function(content, callback) {
+
+		// vars :
+		var _this = this,
+			$this = _this.$this,
+			$content = $(content),
+			toLoad = [], loaded = 0;
+
+		// loop on each content :
+		$content.find('*:not(script)').filter(function() {
+			return $(this).closest('[data-slidizle]').get(0) == _this.$this.get(0);
+		}).each(function() {
+
+			// vars :
+			var $item = $(this),
+				imgUrl;
+
+			// check if is a custom element to load :
+			if (typeof $item.attr('data-slidizle-preload-custom') != 'undefined' && $item.attr('data-slidizle-preload-custom') !== false)
+			{
+				// add to load array :
+				toLoad.push({
+					type : 'custom',
+					$elm : $item
+				});
+				return;
+			}
+
+			// check if image is in css :
+			if ($item.css('background-image').indexOf('none') == -1) {
+				var bkg = $item.css('background-image');
+				if (bkg.indexOf('url') != -1) {
+					var temp = bkg.match(/url\((.*?)\)/);
+					imgUrl = temp[1].replace(/\"/g, '');
+				}
+			} else if ($item.get(0).nodeName.toLowerCase() == 'img' && typeof($item.attr('src')) != 'undefined') {
+				imgUrl = $item.attr('src');
+			}
+
+			if ( ! imgUrl) return;
+
+			// add image to array :
+			toLoad.push({
+				type : 'image',
+				url : imgUrl
+			});
+
+		});
+
+		// check if has nothing to load :
+		if ( ! toLoad.length)
+		{
+			callback($content);
+			return;
+		}
+
+		// loop on all the elements to load :
+		$(toLoad).each(function(index, item) {
+
+			// switch on type :
+			switch (item.type) {
+				case 'image':
+					// create image :
+					var imgLoad = new Image();
+					$(imgLoad).load(function() {
+						// call loaded callback :
+						loadedCallback();
+					}).error(function() {
+						// call loaded :
+						loadedCallback();
+					}).attr('src', item.url);
+				break;
+				case 'custom':
+					// bind event :
+					item.$elm.bind('slidizle.loaded', function(e) {
+						// call loaded :
+						loadedCallback();
+					});
+				break;
+			}
+		});
+
+		// loaded callback :
+		function loadedCallback() {
+			// update number of elements loaded :
+			loaded++;
+
+			// check if loading is finished :
+			if (loaded >= toLoad.length) callback($content);
+		}
+
+	}
+			
+	/**
+	 * Execute an native transition :
+	 *
+	 * @param	String	transition	The transition to operate
+	 */
+	slidizle.prototype._transition = function(transition)
+	{
+		// vars :
+		var _this = this,
+			$this = _this.$this;
+	
+		// get previous and current item :
+		var previous = _this.$refs.previous,
+			current = _this.$refs.current;
+		
+		// switch on transition name :
+		switch (transition)
+		{
+			case 'fade':
+				// hide previous :
+				if (previous) {
+					previous.clearQueue().animate({
+						opacity:0
+					}, 400, function() {
+						// hide :
+						$(this).css('display','none');
+					});
+				}
+				
+				// display current :
+				if (current) {
+					current.css({
+						opacity:0,
+						display:'block'
+					}).clearQueue().animate({
+						opacity:1
+					}, 400);
+				}	
+			break;
+			case 'default':
+			default:
+				// hide previous :
+				if (previous) previous.hide();
+				// display current :
+				current.show();
+			break;
+		}
+	}
+			
+	/**
+	 * Check if the given transition exist in native mode
+	 *
+	 * @param	String	$transition	The transition to check
+	 * @return	Boolean	true if exist, false it not
+	 */
+	slidizle.prototype._isNativeTransition = function(transition)
+	{
+		// vars :
+		var _this = this,
+			$this = _this.$this;
+		
+		// loop on each native transition :
+		for(var i=0; i<_this.config.native_transitions.length; i++) {
+			// check if is this transition :
+			if (transition == _this.config.native_transitions[i]) return true;
+		}
+		
+		// this is not an native transition :
+		return false;
+	}
+	
 	/**
 	 * Play :
 	 */
@@ -405,13 +765,19 @@ jQuery(function($) {
 		// vars :
 		var _this = this,
 			$this = _this.$this;
-				
+		
+		// check if on last item and the slider if on loop :
+		if ( ! _this._getSetting('loop') && _this.current_index >= _this.total-1) return;
+
 		// saving previous :
 		_this.previous_index = _this.current_index;
 		
 		// managing current :
 		_this.current_index = (_this.current_index+1 < _this.total) ? _this.current_index+1 : 0;
 		
+		// managing next :
+		_this.next_index = (_this.current_index+1 < _this.total) ? _this.current_index+1 : 0;
+
 		// change medias :
 		_this._changeMedias();
 	}
@@ -425,12 +791,18 @@ jQuery(function($) {
 		var _this = this,
 			$this = _this.$this;
 		
+		// check if on last item and the slider if on loop :
+		if ( ! _this._getSetting('loop') && _this.current_index <= 0) return;	
+
 		// saving previous :
 		_this.previous_index = _this.current_index;
 		
 		// managing current :
 		_this.current_index = (_this.current_index-1 < 0) ? _this.total-1 : _this.current_index-1;
 		
+		// managing next :
+		_this.next_index = (_this.current_index+1 < _this.total) ? _this.current_index+1 : 0;
+
 		// change medias :
 		_this._changeMedias();
 	}
@@ -491,7 +863,7 @@ jQuery(function($) {
 
 		// play :
 		_this.play();
-	},
+	}
 
 	/**
 	 * Go to and stop :
@@ -509,292 +881,6 @@ jQuery(function($) {
 
 		// play :
 		_this.stop();
-	},
-
-	/**
-	 * tick tick tick...
-	 */
-	slidizle.prototype._tick = function()
-	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-
-		// update current timeout time :
-		_this.current_timeout_time -= _this._getSetting('timerInterval');
-
-		// call the onTimer callback :
-		if (_this._getSetting('onTimer')) {
-			var total_timeout = _this.$refs.current.data('slide-timeout') || _this._getSetting('timeout');
-			_this._getSetting('onTimer')(_this, _this.current_timeout_time, total_timeout);
-			$this.trigger('slidizle.timer', [_this, _this.current_timeout_time, total_timeout]);
-		}
-
-		// check current timeout time :
-		if (_this.current_timeout_time <= 0) {
-			// change media :
-			_this.next();
-		}
-	}
-			
-	/**
-	 * Managing the media change :
-	 */
-	slidizle.prototype._changeMedias = function()
-	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-			
-		// clear timer (relaunchec on transition) :
-		clearInterval(_this.timer);
-		_this.timer = null;
-
-		// save the reference to the previous media displayed :
-		_this.$refs.previous = _this.$refs.current;
-	
-		// save the reference to the current media displayed :
-		_this.$refs.current = _this.$refs.content.children(':eq('+_this.current_index+')');
-
-		// managing active class on the navigation :
-		var current_slide_id = _this.$refs.current.attr('data-slidizle-slide-id');
-
-		_this.$refs.navigation.each(function() {
-			var $nav = $(this),
-				current_navigation_by_slide_id = $(this).children('[data-slidizle-slide-id="'+current_slide_id+'"]');
-
-			if (current_slide_id && current_navigation_by_slide_id)
-			{
-				$nav.children().removeClass(_this._getSetting('classes.active'));
-				current_navigation_by_slide_id.addClass(_this._getSetting('classes.active'));
-			} else {
-				$nav.children().removeClass(_this._getSetting('classes.active'));
-				$nav.children(':eq('+_this.current_index+')').addClass(_this._getSetting('classes.active'));
-			}
-
-		});
-
-		// reset the timeout :
-		var t = _this.$refs.current.data('slide-timeout') || _this._getSetting('timeout');
-		if (t) {
-			_this.current_timeout_time = t;
-		}
-
-		// call the onTimer callback if exist :
-		if (_this._getSetting('onTimer') && _this._getSetting('timeout')) _this._getSetting('onTimer')(_this, _this.current_timeout_time, t);
-		$this.trigger('slidizle.timer', [_this, _this.current_timeout_time, t]);
-
-		// remove the class of the current media on the container :
-		if (_this.$refs.previous) _this.$this.removeClass('slide-'+_this.$refs.previous.index());
-
-		// set the class of the current media on the container :
-		_this.$this.addClass('slide-'+_this.$refs.current.index());
-
-		// add the loading clas to the slider :
-		_this.$refs.slider.addClass(_this._getSetting('classes.loading'));
-		
-		// load all images into content if is some :
-		if (_this.$refs.current.find('img').length>0)
-		{
-			// count images :
-			var $images =  _this.$refs.current.find('img'),
-				total_images = $images.length,
-				total_loaded = 0;
-			
-			// add load event on each image :
-			$images.each(function() {
-				// managing image src to fire correctly the load event :
-				var random = '?random='+Math.round(Math.random()*9999999999).toString(),
-					src = ($(this).data('src')) ? $(this).data('src') : $(this).attr('src');
-				$(this).removeAttr('src');
-				if (navigator.userAgent.match(/MSIE/gi)) $(this).attr('src', src+random);
-				else $(this).attr('src', src);
-				// wait for the load event :
-				$(this).one('load', function() {
-					// update total loaded var :
-					total_loaded++;
-					// check if all images have been loaded :
-					if (total_loaded == total_images) {
-						// remove loading class :
-						_this.$refs.slider.removeClass(_this._getSetting('classes.loading'));
-						
-						// launch transition :
-						launchTransition();
-						
-						// trigger an load event for each images after transition launch to
-						// have access to load handler on images in change event of the api :
-						$images.each(function() {
-							$(this).trigger('load');
-						});
-					}
-				});
-			});
-		} else {
-			// remove loading class :
-			_this.$refs.slider.removeClass(_this._getSetting('classes.loading'));
-		
-			// launch directly the transition :
-			launchTransition();
-		}
-		
-		// launch transition and dispatch en change event :
-		function launchTransition()
-		{
-			// delete active_class before change :
-			_this.$refs.medias.removeClass(_this._getSetting('classes.active'));
-
-			// delete active_class before change :
-			_this.$refs.current.addClass(_this._getSetting('classes.active'));
-
-			// check transition type :
-			if (_this._getSetting('transition') && _this._isNativeTransition(_this._getSetting('transition.callback'))) _this._transition(_this._getSetting('transition.callback'));
-			else if (_this._getSetting('transition') && _this._getSetting('transition.callback')) _this._getSetting('transition.callback')(_this);
-			
-			// callback :
-			if (_this._getSetting('onChange')) _this._getSetting('onChange')(_this);
-			$this.trigger('slidizle.change', [_this]);
-
-			// check if the current if greater than the previous :
-			if (_this.$refs.current.index() == 0 && _this.$refs.previous)
-			{
-				if (_this.$refs.previous.index() == _this.$refs.medias.length-1) {
-					if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
-					$this.trigger('slidizle.next', [_this]);
-				} else {
-					if (_this._getSetting('onPrevious')) _this._getSetting('onPrevious')(_this);
-					$this.trigger('slidizle.previous', [_this]);
-				}
-			} else if (_this.$refs.current.index() == _this.$refs.medias.length-1 && _this.$refs.previous)
-			{
-				if (_this.$refs.previous.index() == 0) {
-					if (_this._getSetting('onPrevious')) _this._getSetting('onPrevious')(_this);
-					$this.trigger('slidizle.previous', [_this]);
-				} else {
-					if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
-					$this.trigger('slidizle.next', [_this]);
-				}
-			} else if (_this.$refs.previous) {
-				if (_this.$refs.current.index() > _this.$refs.previous.index()) {
-					if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
-					$this.trigger('slidizle.next', [_this]);
-				} else {
-					if (_this._getSetting('onPrevious')) _this._getSetting('onPrevious')(_this);
-					$this.trigger('slidizle.previous', [_this]);
-				}
-			} else {
-				if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
-				$this.trigger('slidizle.next', [_this]);
-			}
-
-			// init the timer :
-			if (_this._getSetting('timeout') && _this.$refs.medias.length > 1 && _this.isPlaying && !_this.timer) {
-				clearInterval(_this.timer);
-				_this.timer = setInterval(function() {
-					_this._tick();
-				}, _this._getSetting('timerInterval'));
-			}
-		}
-	}
-			
-	/**
-	 * Execute an native transition :
-	 *
-	 * @param	String	transition	The transition to operate
-	 */
-	slidizle.prototype._transition = function(transition)
-	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-	
-		// get previous and current item :
-		var previous = _this.$refs.previous,
-			current = _this.$refs.current;
-		
-		// switch on transition name :
-		switch (transition)
-		{
-			case 'fade':
-				// hide previous :
-				if (previous) {
-					previous.clearQueue().animate({
-						opacity:0
-					}, 400, function() {
-						// hide :
-						$(this).css('display','none');
-					});
-				}
-				
-				// display current :
-				if (current) {
-					current.css({
-						opacity:0,
-						display:'block'
-					}).clearQueue().animate({
-						opacity:1
-					}, 400);
-				}	
-			break;
-			case 'default':
-			default:
-				// hide previous :
-				if (previous) previous.hide();
-				// display current :
-				current.show();
-			break;
-		}
-	}
-			
-	/**
-	 * Check if the given transition exist in native mode
-	 *
-	 * @param	String	$transition	The transition to check
-	 * @return	Boolean	true if exist, false it not
-	 */
-	slidizle.prototype._isNativeTransition = function(transition)
-	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-		
-		// loop on each native transition :
-		for(var i=0; i<_this.config.native_transitions.length; i++) {
-			// check if is this transition :
-			if (transition == _this.config.native_transitions[i]) return true;
-		}
-		
-		// this is not an native transition :
-		return false;
-	}
-			
-	/**
-	 * Get slider height :
-	 *
-	 * @return	number	slider height
-	 */
-	slidizle.prototype.getHeight = function()
-	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-		
-		// return slider height :
-		return parseInt(_this.$refs.slider.height());
-	}
-	
-	/**
-	 * Get slider width :
-	 *
-	 * @return	number	slider width
-	 */
-	slidizle.prototype.getWidth = function()
-	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-		
-		// return slider height :
-		return parseInt(_this.$refs.slider.width());
 	}
 	
 	/**
@@ -805,11 +891,39 @@ jQuery(function($) {
 	slidizle.prototype.getCurrentMedia = function()
 	{
 		// vars :
-		var _this = this,
-			$this = _this.$this;
+		var _this = this;
 		
 		// return the current media reference :
 		return _this.$refs.current;
+	}
+
+	/**
+	 * Get previous media :
+	 *
+	 * @return 	jQuery Object 	The previous media reference
+	 */
+	slidizle.prototype.getPreviousMedia = function() {
+
+		// vars :
+		var _this = this;
+
+		// return the previous media :
+		return _this.$refs.previous;
+	}
+
+	/**
+	 * Get the next media :
+	 *
+	 * @return 	jQuery Object 	The next media reference
+	 */
+	slidizle.prototype.getNextMedia = function() {
+
+		// vars :
+		var _this = this;
+
+		// get the next media :
+		return _this.$refs.next;
+
 	}
 	
 	/**
@@ -825,6 +939,34 @@ jQuery(function($) {
 		
 		// return all medias :
 		return _this.$refs.medias;
+	}
+
+	/**
+	 * Return if is last or not :
+	 *
+	 * @return 	boolean 	true | false
+	 */
+	slidizle.prototype.isLast = function() {
+
+		// vars :
+		var _this = this;
+
+		return (_this.getCurrentMedia().index() >= _this.getAllMedias().length-1);
+
+	}
+
+	/**
+	 * Return if is first or not :
+	 *
+	 * @return 	boolean 	true | false
+	 */
+	slidizle.prototype.isFirst = function() {
+
+		// vars :
+		var _this = this;
+
+		return (_this.getCurrentMedia().index() <= 0);
+
 	}
 	
 	/**
