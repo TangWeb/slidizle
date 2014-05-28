@@ -44,7 +44,7 @@ jQuery(function($) {
 			loop 					: false,						// set if the slider has to go first item when next on last
 			autoPlay				: true,						// set if the slider has to play directly or not
 			timerInterval				: 1000,						// save the interval for the timer refreshing
-			loadBeforeTransition 			: false, 						// specify if need to load the next content before the transition
+			loadBeforeTransition 			: true, 						// specify if need to load the next content before the transition
 			onInit					: null,						// callback when the slider is inited
 			onClick					: null,						// callback when a slide is clicked
 			onChange				: null,						// callback when the slider change from one media to another
@@ -392,18 +392,18 @@ jQuery(function($) {
 		// set the class of the current media on the container :
 		_this.$this.addClass('slide-'+_this.$refs.current.index());
 
-		// add the loading clas to the slider :
-		_this.$refs.slider.addClass(_this._getSetting('classes.loading'));
-
-		// add load class on current element :
-		_this.$refs.current.addClass(_this._getSetting('classes.loading'));
-
 		// launch transition :
 		if ( ! _this._getSetting('loadBeforeTransition')) 
 		{
 			// launch transition directly :
 			launchTransition();
 		} else {
+			// add the loading clas to the slider :
+			_this.$refs.slider.addClass(_this._getSetting('classes.loading'));
+
+			// add load class on current element :
+			_this.$refs.current.addClass(_this._getSetting('classes.loading'));
+
 			// load content of slide :
 			_this._loadSlide(_this.$refs.current, function($slide) {
 
