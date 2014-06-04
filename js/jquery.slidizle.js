@@ -5,8 +5,8 @@
  *
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
- * @updated 	02.12.2013
- * @version	1.2.4
+ * @updated 	04.06.2014
+ * @version	1.2.5
  */
 (function($) {
 	
@@ -43,6 +43,8 @@
 			nextOnClick 				: false,						// set if the slider has to go next on mouse click
 			loop 					: false,						// set if the slider has to go first item when next on last
 			autoPlay				: true,						// set if the slider has to play directly or not
+			keyboardEnabled  			: true,						// activate or not the keyboard
+			touchEnabled 				: true, 						// activate or not the touch navigation
 			timerInterval				: 1000,						// save the interval for the timer refreshing
 			loadBeforeTransition 			: false, 						// specify if need to load the next content before the transition
 			onInit					: null,						// callback when the slider is inited
@@ -186,6 +188,12 @@
 				});
 			}
 
+			// keyboard navigation :
+			if (_this._getSetting('keyboardEnabled')) _this._initKeyboardNavigation();
+
+			// touch navigation :
+			if (_this._getSetting('touchEnabled') && navigator.userAgent.match(/mobile/gi)) _this._initTouchNavigation();
+
 			// play :
 			if (_this._getSetting('autoPlay') && _this.$refs.medias.length > 1) _this.play();
 
@@ -278,6 +286,70 @@
 			
 			// prevent default behaviors :
 			e.preventDefault();
+		});
+	}
+
+	/**
+	 * Init keyboard navigation :
+	 */
+	slidizle.prototype._initKeyboardNavigation = function()
+	{
+		// vars :
+		var _this = this,
+			$this = _this.$this;
+
+		// listen for keyboard events :
+		$(document).bind('keyup', function(e) {
+
+			// check the pressed key :
+			switch (e.keyCode)
+			{
+				case 39:
+					_this.next();
+				break;
+				case 37:
+					_this.previous();
+				break;
+			}
+
+		});
+	}
+
+	/**
+	 * Init touch navigation :
+	 */
+	slidizle.prototype._initTouchNavigation = function()
+	{
+		// vars :
+		var _this = this,
+			$this = _this.$this,
+			xStart, yStart;
+
+		// listen for needed events :
+		$(document).bind('touchstart', function(e) {
+			xStart = e.originalEvent.touches[0].clientX;
+			yStart = e.originalEvent.touches[0].clientY;
+		});
+		$(document).bind('touchmove', function(e) {
+			if ( ! xStart || ! yStart) return;
+			var x = e.originalEvent.touches[0].clientX,
+				y = e.originalEvent.touches[0].clientY,
+				xDiff = xStart - x,
+				yDiff = yStart - y;
+
+			// check direction :
+			if (Math.abs(xDiff) > Math.abs(yDiff))
+			{
+				if (xDiff > 0)
+				{
+					_this.next();
+				} else {
+					_this.previous();
+				}
+			}
+
+			// reset values :
+			xStart = yStart = null;
 		});
 	}
 
