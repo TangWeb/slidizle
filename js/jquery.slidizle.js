@@ -6,7 +6,7 @@
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
  * @updated 	04.06.2014
- * @version	1.2.5
+ * @version	1.2.51
  */
 (function($) {
 	
@@ -81,7 +81,8 @@
 		this.isOver = false;										// save the over state
 		this.total = 0;											// save the total number of element in the slider				
 		this.$this = $(item);										// save the jQuery item to access it
-		
+		this.clickEvent = navigator.userAgent.match(/mobile/gi) ? 'touchend' : 'click'; 		// the best click event depending on device
+
 		// init :
 		this.init($(item), options); 
 		
@@ -144,7 +145,7 @@
 			_this.$refs.medias.addClass(_this._getSetting('classes.slide'));
 
 			// adding click on slides :
-			_this.$refs.medias.click(function(e) {
+			_this.$refs.medias.bind(_this.clickEvent, function(e) {
 				// trigger an event :
 				$this.trigger('slidizle.click',[_this]);
 				// callback :
@@ -247,7 +248,7 @@
 		}
 		
 		// add click event on navigation :
-		_this.$refs.navigation.children().bind('click', function(e) {
+		_this.$refs.navigation.children().bind(_this.clickEvent, function(e) {
 			
 			// vars :
 			var $nav = $(this),
@@ -366,7 +367,7 @@
 		if (_this.$refs.previous)
 		{	
 			// add click handler :
-			if (_this.total > 1) _this.$refs.previous.bind('click', function() { _this.previous(); });
+			if (_this.total > 1) _this.$refs.previous.bind(_this.clickEvent, function() { _this.previous(); });
 			// hide if no multiple medias :
 			if (_this.total <= 1) _this.$refs.previous.hide();
 		}
@@ -375,7 +376,7 @@
 		if (_this.$refs.next)
 		{
 			// add click handler :
-			if (_this.total > 1) _this.$refs.next.bind('click', function() { _this.next(); });
+			if (_this.total > 1) _this.$refs.next.bind(_this.clickEvent, function() { _this.next(); });
 			// hide if no multiple medias :
 			if (_this.total <= 1) _this.$refs.next.hide();
 		}
