@@ -1205,7 +1205,7 @@
 	}
 
 })(jQuery);
-jQuery(function($) {
+(function($) {
 	// check auto init :
 	$.fn.l = $.fn.livequery || $.fn.each;
 	if (typeof autoinit != 'undefined' && autoinit.slidizle) {
@@ -1214,4 +1214,4 @@ jQuery(function($) {
 			$(this).slidizle(settings);
 		});
 	}
-});
+})(jQuery);
