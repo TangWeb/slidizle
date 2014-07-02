@@ -1,4 +1,4 @@
-# jQuery.slidizle (1.3.0)
+# jQuery.slidizle (1.3.1)
 
 This plugin allows you to create fully customizable slider. Slidizle is focused on managing your slider by just applying some classes on each of your html elements so you can have the full control over your slider look.
 
@@ -153,7 +153,10 @@ classes : {
 	previous 				: 'slidizle-previous',			
 	
 	// class applied on navigation element
-	navigation 				: 'slidizle-navigation',					
+	navigation 				: 'slidizle-navigation',			
+	
+	// class applied on timer element
+	timer 					: 'slidizle-timer', // not documented		
 	
 	// class applied on each slide
 	slide 					: 'slidizle-slide',			
@@ -178,10 +181,19 @@ classes : {
 	
 	// the className to add to the slider and slides when it is in loading mode
 	loading 				: 'loading'				
-},
+},					
+
+// save the transition options like duration, ease, etc (by default, no transition in js)...
+transition : {										
+	
+	// the name or callback function of the transition to use
+	callback				: null,					
+	duration				: 1000, 
+	ease					: ''
+},	
 
 // the slider interval time between each medias
-timeout					: null,						
+timeout					: null,
 
 // set if the slider has to make pause on mouse hover
 pauseOnHover				: false,						
@@ -199,10 +211,7 @@ autoPlay				: true,
 keyboardEnabled  			: true,						
 
 // activate or not the touch navigation for mobile (swipe)
-touchEnabled 				: true, 						
-
-// save the interval for the timer refreshing
-timerInterval				: 1000,						
+touchEnabled 				: true, 										
 
 // specify if need to load the next content before the transition
 loadBeforeTransition 			: true, 						
@@ -228,8 +237,8 @@ onPlay					: null,
 // callback when the slider change his state to pause
 onPause				: null,						
 
-// callback when the slider timeout progress.
-onTimer				: null	
+// callback when the slider resume after a pause
+onResume 				: null	
 ```
 
 > All the options can be set directly on the DOM element using the pattern : __data-overlizle-{option-separated-with-dash}="{value}"__

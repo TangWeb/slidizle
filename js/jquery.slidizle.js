@@ -6,7 +6,7 @@
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
  * @updated 	01.07.2014
- * @version	1.3.0
+ * @version	1.3.1
  */
 (function($) {
 	
@@ -62,15 +62,6 @@
 				// the className to add to the slider and slides when it is in loading mode
 				loading 				: 'loading'				
 			},					
-			
-			// save the transition options like duration, ease, etc (by default, no transition in js)...
-			transition : {										
-				
-				// the name or callback function of the transition to use
-				callback				: null,					
-				duration				: 1000, 
-				ease					: ''
-			},	
 
 			// the slider interval time between each medias
 			timeout					: null,
@@ -118,10 +109,7 @@
 			onPause				: null,						
 			
 			// callback when the slider resume after a pause
-			onResume 				: null,
-
-			// callback when the slider timeout progress.
-			onTimer				: null			
+			onResume 				: null		
 		};
 		this.$refs = {
 			slider					: null,						// save the reference to the slider container itself
@@ -135,11 +123,6 @@
 			previous				: null,						// save the reference to the previous button element
 			current					: null,						// save the reference to the current media displayed
 			timer 					: null						// save the reference to the timer element if exist
-		};
-		this.config = {
-			native_transitions : [									// list of native transitions
-				'default', 'fade'
-			]
 		};
 		this.current_timeout_time = 0;									// save the current time of the timeout
 		this._internalTimer = null;									// save the internal timer used to calculate the remaining timeout etc...
@@ -616,10 +599,6 @@
 
 			// delete active_class before change :
 			_this.$refs.currentMedia.addClass(_this.settings.classes.active);
-
-			// check transition type :
-			if (_this.settings.transition && _this._isNativeTransition(_this.settings.transition.callback)) _this._transition(_this.settings.transition.callback);
-			else if (_this.settings.transition && _this.settings.transition.callback) _this.settings.transition.callback(_this);
 			
 			// callback :
 			if (_this.settings.onChange) _this.settings.onChange(_this);
@@ -767,77 +746,6 @@
 
 	}
 			
-	/**
-	 * Execute an native transition :
-	 *
-	 * @param	String	transition	The transition to operate
-	 */
-	Slidizle.prototype._transition = function(transition)
-	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-	
-		// get previous and current item :
-		var previous = _this.$refs.previousMedia,
-			current = _this.$refs.currentMedia;
-		
-		// switch on transition name :
-		switch (transition)
-		{
-			case 'fade':
-				// hide previous :
-				if (previous) {
-					previous.clearQueue().animate({
-						opacity:0
-					}, 400, function() {
-						// hide :
-						$(this).css('display','none');
-					});
-				}
-				
-				// display current :
-				if (current) {
-					current.css({
-						opacity:0,
-						display:'block'
-					}).clearQueue().animate({
-						opacity:1
-					}, 400);
-				}	
-			break;
-			case 'default':
-			default:
-				// hide previous :
-				if (previous) previous.hide();
-				// display current :
-				current.show();
-			break;
-		}
-	}
-			
-	/**
-	 * Check if the given transition exist in native mode
-	 *
-	 * @param	String	$transition	The transition to check
-	 * @return	Boolean	true if exist, false it not
-	 */
-	Slidizle.prototype._isNativeTransition = function(transition)
-	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-		
-		// loop on each native transition :
-		for(var i=0; i<_this.config.native_transitions.length; i++) {
-			// check if is this transition :
-			if (transition == _this.config.native_transitions[i]) return true;
-		}
-		
-		// this is not an native transition :
-		return false;
-	}
-
 	/**
 	 * Play :
 	 */
