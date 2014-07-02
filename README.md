@@ -5,7 +5,7 @@ This plugin allows you to create fully customizable slider. Slidizle is focused 
 
 ## Install
 
-You can download or close the repo, or just use bower like this
+You can download or clone the repo, or just use bower like this
 
 ```text
 bower install jquery.slidizle
