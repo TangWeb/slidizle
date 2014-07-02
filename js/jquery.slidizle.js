@@ -6,7 +6,7 @@
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
  * @updated 	01.07.2014
- * @version	1.3.1
+ * @version	1.3.11
  */
 (function($) {
 	
@@ -1238,6 +1238,9 @@
 			// error :
 			$.error( 'Method ' +  method + ' does not exist on jQuery.slidizle' );
 		}
+
+		// return this :
+		return this;
 	}
 
 })(jQuery);
