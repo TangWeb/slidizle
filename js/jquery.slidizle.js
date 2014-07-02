@@ -6,7 +6,7 @@
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
  * @updated 	01.07.2014
- * @version	1.3.11
+ * @version	1.3.12
  */
 (function($) {
 	
@@ -1191,13 +1191,16 @@
 		for (var name in flatSettings)
 		{
 			// split the setting name :
-			var inline_setting = 'data-slidizle-' + name.replace('.','-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
-				inline_attr = $this.attr(inline_setting);
+			var inline_setting = 'slidizle-' + name.replace('.','-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
+				inline_attr = $this.data(inline_setting);
 
 			// check if element has inline setting :
-			if (typeof inline_attr !== 'undefined' && inline_attr !== false) {
+			if (typeof inline_attr !== 'undefined') {
 				// set the setting :
-				eval('_this.settings.'+name+' = '+inline_attr);
+				if (typeof inline_attr == 'number' || typeof inline_attr == 'boolean')
+					eval('_this.settings.'+name+' = '+inline_attr);
+				else 
+					eval('_this.settings.'+name+' = "'+inline_attr+'"');
 			}
 		}
 
@@ -1241,6 +1244,15 @@
 
 		// return this :
 		return this;
+	}
+
+	/**
+	 * Expose to AMD
+	 */
+	if (typeof window.define === 'function' && window.define.amd) {
+		return window.define(['jquery'], function() {
+			return window.Slidizle;
+		});
 	}
 
 })(jQuery);

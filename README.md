@@ -1,4 +1,4 @@
-# jQuery.slidizle (1.3.11)
+# jQuery.slidizle (1.3.12)
 
 This plugin allows you to create fully customizable slider. Slidizle is focused on managing your slider by just applying some classes on each of your html elements so you can have the full control over your slider look.
 
