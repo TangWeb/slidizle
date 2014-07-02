@@ -6,14 +6,14 @@
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
  * @updated 	01.07.2014
- * @version	1.2.52
+ * @version	1.3.0
  */
 (function($) {
 	
 	/**
 	 * Plugin :
 	 */
-	function slidizle(item, options) {
+	function Slidizle(item, options) {
 		
 		// vars :
 		this.settings = {
@@ -61,10 +61,7 @@
 				
 				// the className to add to the slider and slides when it is in loading mode
 				loading 				: 'loading'				
-			},
-
-			// the slider interval time between each medias
-			timeout					: null,					
+			},					
 			
 			// save the transition options like duration, ease, etc (by default, no transition in js)...
 			transition : {										
@@ -74,6 +71,9 @@
 				duration				: 1000, 
 				ease					: ''
 			},	
+
+			// the slider interval time between each medias
+			timeout					: null,
 			
 			// set if the slider has to make pause on mouse hover
 			pauseOnHover				: false,						
@@ -91,10 +91,7 @@
 			keyboardEnabled  			: true,						
 			
 			// activate or not the touch navigation for mobile (swipe)
-			touchEnabled 				: true, 						
-			
-			// save the interval for the timer refreshing
-			timerInterval				: 1000,						
+			touchEnabled 				: true, 										
 			
 			// specify if need to load the next content before the transition
 			loadBeforeTransition 			: true, 						
@@ -120,8 +117,11 @@
 			// callback when the slider change his state to pause
 			onPause				: null,						
 			
+			// callback when the slider resume after a pause
+			onResume 				: null,
+
 			// callback when the slider timeout progress.
-			onTimer				: null						
+			onTimer				: null			
 		};
 		this.$refs = {
 			slider					: null,						// save the reference to the slider container itself
@@ -142,13 +142,14 @@
 			]
 		};
 		this.current_timeout_time = 0;									// save the current time of the timeout
-		this.timer = null;										// save the timeout used as timer
+		this._internalTimer = null;									// save the internal timer used to calculate the remaining timeout etc...
 		this.timeout = null;										// save the timeout for playing slider
 		this.previous_index = 0;									// save the index of the previous media displayed
 		this.current_index = 0;										// save the index of the current media displayed
 		this.next_index = 0; 										// save the index of the next media
-		this.isPlaying = false;										// save the playing state
-		this.isOver = false;										// save the over state
+		this._isPlaying = false;										// save the playing state
+		this._isPause = false;										// save the pause status
+		this._isOver = false;										// save the over state
 		this.total = 0;											// save the total number of element in the slider				
 		this.$this = $(item);										// save the jQuery item to access it
 		this.clickEvent = navigator.userAgent.match(/mobile/gi) ? 'touchend' : 'click'; 		// the best click event depending on device
@@ -164,17 +165,17 @@
 	 * @param	jQuery	item	The jQuery item
 	 * @param	object	options	The options
 	 */
-	slidizle.prototype.init = function(item, options) {
+	Slidizle.prototype.init = function(item, options) {
 		
 		// vars :
 		var _this = this,
 			$this = item;
 		
 		// add bb-slider class if needed :
-		if (!$this.hasClass(_this._getSetting('classes.slider'))) $this.addClass(_this._getSetting('classes.slider'));
+		if (!$this.hasClass(_this.settings.classes.slider)) $this.addClass(_this.settings.classes.slider);
 
 		// update options :
-		$.extend(true, _this.settings, options);
+		_this._extendSettings(options);
 
 		// save all references :
 		_this.$refs.slider = $this;
@@ -195,11 +196,11 @@
 		});;
 
 		// apply class :
-		if (_this.$refs.content) _this.$refs.content.addClass(_this._getSetting('classes.content'));
-		if (_this.$refs.next) _this.$refs.next.addClass(_this._getSetting('classes.next'));
-		if (_this.$refs.previous) _this.$refs.previous.addClass(_this._getSetting('classes.previous'));
-		if (_this.$refs.navigation) _this.$refs.navigation.addClass(_this._getSetting('classes.navigation'));
-		if (_this.$refs.timer) _this.$refs.timer.addClass(_this._getSetting('classes.timer'));
+		if (_this.$refs.content) _this.$refs.content.addClass(_this.settings.classes.content);
+		if (_this.$refs.next) _this.$refs.next.addClass(_this.settings.classes.next);
+		if (_this.$refs.previous) _this.$refs.previous.addClass(_this.settings.classes.previous);
+		if (_this.$refs.navigation) _this.$refs.navigation.addClass(_this.settings.classes.navigation);
+		if (_this.$refs.timer) _this.$refs.timer.addClass(_this.settings.classes.timer);
 
 		// get all medias in the slider :
 		var $content_childs = _this.$refs.content.children(':first-child');
@@ -212,14 +213,14 @@
 		if (_this.$refs.medias) {
 
 			// add class on medias :
-			_this.$refs.medias.addClass(_this._getSetting('classes.slide'));
+			_this.$refs.medias.addClass(_this.settings.classes.slide);
 
 			// adding click on slides :
 			_this.$refs.medias.bind(_this.clickEvent, function(e) {
 				// trigger an event :
 				$this.trigger('slidizle.click',[_this]);
 				// callback :
-				if (_this._getSetting('onClick')) _this._getSetting('onClick')(_this);
+				if (_this.settings.onClick) _this.settings.onClick(_this);
 			});
 			
 			// creating data :
@@ -230,9 +231,6 @@
 			if (_this.$refs.navigation.length>=1) _this._initNavigation();
 			_this.initPreviousNextNavigation();
 		
-			// hiding all medias :
-			if (_this._getSetting('transition') && _this._isNativeTransition(_this._getSetting('transition.callback'))) _this.$refs.medias.hide();
-
 			// check if a content is already active :
 			var $active_slide = _this.$refs.medias.filter('.active:first');
 			if ($active_slide.length >= 1) {
@@ -244,32 +242,32 @@
 			_this._changeMedias();	
 
 			// check if pauseOnHover is set to true :
-			if (_this._getSetting('pauseOnHover')) {
+			if (_this.settings.pauseOnHover) {
 				// add hover listener :
 				$this.hover(function(e) {
+					// update _isOver state :
+					_this._isOver = true;
 					// pause :
 					_this.pause();
-					// update isOver state :
-					_this.isOver = true;
 				}, function(e) {
-					// play :
-					_this.play();
-					// update isOver state :
-					_this.isOver = false;
+					// update _isOver state :
+					_this._isOver = false;
+					// resume :
+					_this.resume();
 				});
 			}
 
 			// keyboard navigation :
-			if (_this._getSetting('keyboardEnabled') && _this._getSetting('keyboardEnabled') != 'false') _this._initKeyboardNavigation();
+			if (_this.settings.keyboardEnabled && _this.settings.keyboardEnabled != 'false') _this._initKeyboardNavigation();
 
 			// touch navigation :
-			if (_this._getSetting('touchEnabled') && navigator.userAgent.match(/mobile/gi)) _this._initTouchNavigation();
+			if (_this.settings.touchEnabled && navigator.userAgent.match(/mobile/gi)) _this._initTouchNavigation();
 
 			// play :
-			if (_this._getSetting('autoPlay') && _this.$refs.medias.length > 1) _this.play();
+			if (_this.settings.autoPlay && _this.$refs.medias.length > 1) _this.play();
 
 			// check if next on click :
-			if (_this._getSetting('nextOnClick'))
+			if (_this.settings.nextOnClick)
 			{
 				_this.$refs.content.bind('click', function() {
 					_this.next();
@@ -279,10 +277,10 @@
 		}
 
 		// apply class :
-		$this.addClass(_this._getSetting('classes.slider'));
+		$this.addClass(_this.settings.classes.slider);
 
 		// check the on init :
-		if (_this._getSetting('onInit')) _this._getSetting('onInit')(_this);
+		if (_this.settings.onInit) _this.settings.onInit(_this);
 		$this.trigger('slidizle.init', [_this]);
 		
 	}
@@ -290,7 +288,7 @@
 	/**
 	 * Creation of the navigation :
 	 */
-	slidizle.prototype._initNavigation = function()
+	Slidizle.prototype._initNavigation = function()
 	{
 		// vars :
 		var _this = this,
@@ -363,7 +361,7 @@
 	/**
 	 * Init keyboard navigation :
 	 */
-	slidizle.prototype._initKeyboardNavigation = function()
+	Slidizle.prototype._initKeyboardNavigation = function()
 	{
 		// vars :
 		var _this = this,
@@ -389,7 +387,7 @@
 	/**
 	 * Init touch navigation :
 	 */
-	slidizle.prototype._initTouchNavigation = function()
+	Slidizle.prototype._initTouchNavigation = function()
 	{
 		// vars :
 		var _this = this,
@@ -427,7 +425,7 @@
 	/**
 	 * Init next and prev links :
 	 */
-	slidizle.prototype.initPreviousNextNavigation = function()
+	Slidizle.prototype.initPreviousNextNavigation = function()
 	{
 		// vars :
 		var _this = this,
@@ -453,44 +451,81 @@
 	}
 
 	/**
-	 * tick tick tick...
+	 * Pause the timer :
 	 */
-	slidizle.prototype._tick = function()
-	{
+	Slidizle.prototype._pauseTimer = function() {
+
+		// vars :
+		var _this = this;
+
+		// stop the timer :
+		clearInterval(_this._internalTimer);
+	};
+
+	/**
+	 * Stop the timer :
+	 */
+	Slidizle.prototype._stopTimer = function() {
+
+		// vars :
+		var _this = this;
+
+		// stop the timer :
+		clearInterval(_this._internalTimer);
+
+		// reset timer :
+		_this._resetTimer();
+	};
+
+	/**
+	 * Reset timer values :
+	 */
+	Slidizle.prototype._resetTimer = function() {
+
+		// vars :
+		var _this = this;
+
+		// reset values :
+		_this.current_timeout_time = _this.$refs.currentMedia.data('slidizle-timeout') || _this.settings.timeout;
+		_this.total_timeout_time = _this.$refs.currentMedia.data('slidizle-timeout') || _this.settings.timeout;
+
+	};
+
+	/**
+	 * Start the timer :
+	 */
+	Slidizle.prototype._startTimer = function() {
+
 		// vars :
 		var _this = this,
 			$this = _this.$this;
 
-		// update current timeout time :
-		_this.current_timeout_time -= _this._getSetting('timerInterval');
+		// init the internal timer :
+		clearInterval(_this._internalTimer);
+		_this._internalTimer = setInterval(function() {
+			
+			// update current timeout :
+			_this.current_timeout_time -= 10;
 
-		// call the onTimer callback :
-		if (_this._getSetting('onTimer')) {
-			var total_timeout = _this.$refs.current.data('slide-timeout') || _this._getSetting('timeout');
-			_this._getSetting('onTimer')(_this, _this.current_timeout_time, total_timeout);
-			$this.trigger('slidizle.timer', [_this, _this.current_timeout_time, total_timeout]);
-		}
+			// check current timeout time :
+			if (_this.current_timeout_time <= 0) {
+				// change media :
+				_this.next();
+			}
 
-		// check current timeout time :
-		if (_this.current_timeout_time <= 0) {
-			// change media :
-			_this.next();
-		}
-	}
+		},10);
+
+	};
 			
 	/**
 	 * Managing the media change :
 	 */
-	slidizle.prototype._changeMedias = function()
+	Slidizle.prototype._changeMedias = function()
 	{
 		// vars :
 		var _this = this,
 			$this = _this.$this,
-			disabledClass = _this._getSetting('classes.disabled');
-			
-		// clear timer (relaunchec on transition) :
-		clearInterval(_this.timer);
-		_this.timer = null;
+			disabledClass = _this.settings.classes.disabled;
 
 		// save the reference to the previous media displayed :
 		_this.$refs.previousMedia = _this.$refs.currentMedia;
@@ -500,6 +535,9 @@
 
 		// save the reference to next media :
 		_this.$refs.nextMedia = _this.$refs.content.children(':eq('+_this.next_index+')');
+
+		// clear timer (relaunched on transition) :
+		_this._stopTimer();
 
 		// manage disabled class on navigation :
 		if (_this.$refs.next)
@@ -529,24 +567,14 @@
 
 			if (current_slide_id && current_navigation_by_slide_id)
 			{
-				$nav.children().removeClass(_this._getSetting('classes.active'));
-				current_navigation_by_slide_id.addClass(_this._getSetting('classes.active'));
+				$nav.children().removeClass(_this.settings.classes.active);
+				current_navigation_by_slide_id.addClass(_this.settings.classes.active);
 			} else {
-				$nav.children().removeClass(_this._getSetting('classes.active'));
-				$nav.children(':eq('+_this.current_index+')').addClass(_this._getSetting('classes.active'));
+				$nav.children().removeClass(_this.settings.classes.active);
+				$nav.children(':eq('+_this.current_index+')').addClass(_this.settings.classes.active);
 			}
 
 		});
-
-		// reset the timeout :
-		var t = _this.$refs.currentMedia.data('slide-timeout') || _this._getSetting('timeout');
-		if (t) {
-			_this.current_timeout_time = t;
-		}
-
-		// call the onTimer callback if exist :
-		if (_this._getSetting('onTimer') && _this._getSetting('timeout')) _this._getSetting('onTimer')(_this, _this.current_timeout_time, t);
-		$this.trigger('slidizle.timer', [_this, _this.current_timeout_time, t]);
 
 		// remove the class of the current media on the container :
 		if (_this.$refs.previousMedia) _this.$this.removeClass('slide-'+_this.$refs.previousMedia.index());
@@ -555,13 +583,13 @@
 		_this.$this.addClass('slide-'+_this.$refs.currentMedia.index());
 
 		// add the loading clas to the slider :
-		_this.$refs.slider.addClass(_this._getSetting('classes.loading'));
+		_this.$refs.slider.addClass(_this.settings.classes.loading);
 
 		// add load class on current element :
-		_this.$refs.currentMedia.addClass(_this._getSetting('classes.loading'));
+		_this.$refs.currentMedia.addClass(_this.settings.classes.loading);
 
 		// launch transition :
-		if ( ! _this._getSetting('loadBeforeTransition') || _this._getSetting('loadBeforeTransition') == 'false') 
+		if ( ! _this.settings.loadBeforeTransition || _this.settings.loadBeforeTransition == 'false') 
 		{
 			// launch transition directly :
 			launchTransition();
@@ -570,10 +598,10 @@
 			_this._loadSlide(_this.$refs.currentMedia, function($slide) {
 
 				// remove loading class
-				$slide.removeClass(_this._getSetting('classes.loading'));
+				$slide.removeClass(_this.settings.classes.loading);
 
 				// remove loading class :
-				_this.$refs.slider.removeClass(_this._getSetting('classes.loading'));
+				_this.$refs.slider.removeClass(_this.settings.classes.loading);
 
 				// launch transition if has to be launched after loading :
 				launchTransition();
@@ -584,65 +612,63 @@
 		function launchTransition()
 		{
 			// delete active_class before change :
-			_this.$refs.medias.removeClass(_this._getSetting('classes.active'));
+			_this.$refs.medias.removeClass(_this.settings.classes.active);
 
 			// delete active_class before change :
-			_this.$refs.currentMedia.addClass(_this._getSetting('classes.active'));
+			_this.$refs.currentMedia.addClass(_this.settings.classes.active);
 
 			// check transition type :
-			if (_this._getSetting('transition') && _this._isNativeTransition(_this._getSetting('transition.callback'))) _this._transition(_this._getSetting('transition.callback'));
-			else if (_this._getSetting('transition') && _this._getSetting('transition.callback')) _this._getSetting('transition.callback')(_this);
+			if (_this.settings.transition && _this._isNativeTransition(_this.settings.transition.callback)) _this._transition(_this.settings.transition.callback);
+			else if (_this.settings.transition && _this.settings.transition.callback) _this.settings.transition.callback(_this);
 			
 			// callback :
-			if (_this._getSetting('onChange')) _this._getSetting('onChange')(_this);
+			if (_this.settings.onChange) _this.settings.onChange(_this);
 			$this.trigger('slidizle.change', [_this]);
 
 			// manage onNext onPrevious events :
 			if (_this.$refs.currentMedia.index() == 0 && _this.$refs.previousMedia)
 			{
 				if (_this.$refs.previousMedia.index() == _this.$refs.medias.length-1) {
-					if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
+					if (_this.settings.onNext) _this.settings.onNext(_this);
 					$this.trigger('slidizle.next', [_this]);
 				} else {
-					if (_this._getSetting('onPrevious')) _this._getSetting('onPrevious')(_this);
+					if (_this.settings.onPrevious) _this.settings.onPrevious(_this);
 					$this.trigger('slidizle.previous', [_this]);
 				}
 			} else if (_this.$refs.currentMedia.index() == _this.$refs.medias.length-1 && _this.$refs.previousMedia)
 			{
 				if (_this.$refs.previousMedia.index() == 0) {
-					if (_this._getSetting('onPrevious')) _this._getSetting('onPrevious')(_this);
+					if (_this.settings.onPrevious) _this.settings.onPrevious(_this);
 					$this.trigger('slidizle.previous', [_this]);
 				} else {
-					if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
+					if (_this.settings.onNext) _this.settings.onNext(_this);
 					$this.trigger('slidizle.next', [_this]);
 				}
 			} else if (_this.$refs.previousMedia) {
 				if (_this.$refs.currentMedia.index() > _this.$refs.previousMedia.index()) {
-					if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
+					if (_this.settings.onNext) _this.settings.onNext(_this);
 					$this.trigger('slidizle.next', [_this]);
 				} else {
-					if (_this._getSetting('onPrevious')) _this._getSetting('onPrevious')(_this);
+					if (_this.settings.onPrevious) _this.settings.onPrevious(_this);
 					$this.trigger('slidizle.previous', [_this]);
 				}
 			} else {
-				if (_this._getSetting('onNext')) _this._getSetting('onNext')(_this);
+				if (_this.settings.onNext) _this.settings.onNext(_this);
 				$this.trigger('slidizle.next', [_this]);
 			}
 
-			// init the timer :
-			if (_this._getSetting('timeout') && _this.$refs.medias.length > 1 && _this.isPlaying && !_this.timer) {
-				clearInterval(_this.timer);
-				_this.timer = setInterval(function() {
-					_this._tick();
-				}, _this._getSetting('timerInterval'));
-			}
+			// start timer :
+			if (_this.getTotalTimeout()
+				&& ! _this._isOver
+				&& _this.isPlay()
+			) _this._startTimer();
 		}
 	}
 
 	/**
 	 * Load a slide :
 	 */
-	slidizle.prototype._loadSlide = function(content, callback) {
+	Slidizle.prototype._loadSlide = function(content, callback) {
 
 		// vars :
 		var _this = this,
@@ -746,7 +772,7 @@
 	 *
 	 * @param	String	transition	The transition to operate
 	 */
-	slidizle.prototype._transition = function(transition)
+	Slidizle.prototype._transition = function(transition)
 	{
 		// vars :
 		var _this = this,
@@ -796,7 +822,7 @@
 	 * @param	String	$transition	The transition to check
 	 * @return	Boolean	true if exist, false it not
 	 */
-	slidizle.prototype._isNativeTransition = function(transition)
+	Slidizle.prototype._isNativeTransition = function(transition)
 	{
 		// vars :
 		var _this = this,
@@ -811,147 +837,145 @@
 		// this is not an native transition :
 		return false;
 	}
-	
-	/**
-	 * Is loop :
-	 */
-	slidizle.prototype.isLoop = function() {
-		var _this = this,
-			loop = _this._getSetting('loop');
-		return (loop && loop != 'false');
-	};
 
 	/**
 	 * Play :
 	 */
-	slidizle.prototype.play = function()
+	Slidizle.prototype.play = function()
 	{
 		// vars :
 		var _this = this,
 			$this = _this.$this;
 
-		// remove the pause class :
-		_this.$this.removeClass(_this._getSetting('classes.pause'));
-		_this.$this.removeClass(_this._getSetting('classes.stop'));
+		// protect :
+		if (_this._isPlaying || ! _this.getTotalTimeout() || ! _this.$refs.medias.length) return;	
 
-		// check the status :
-		if (!_this.isPlaying && _this._getSetting('timeout') && _this.$refs.medias.length > 1) {
-			// update the state :
-			_this.isPlaying = true;
-			// check the current_timeout_time :
-			if (_this.current_timeout_time <= 0) {
-				// reset the timeout :
-				var t = _this.$refs.current.data('slide-timeout') || _this._getSetting('timeout');
-				if (t) {
-					_this.current_timeout_time = t;
-				}
-			}
-			// start the timer :
-			clearInterval(_this.timer);
-			_this.timer = setInterval(function() {
-				_this._tick();
-			}, _this._getSetting('timerInterval'));
-			// add the play class :
-			_this.$this.addClass(_this._getSetting('classes.play'));
-			// trigger callback :
-			if (_this._getSetting('onPlay')) _this._getSetting('onPlay')(_this);
-			$this.trigger('slidizle.play', [_this]);
-		}
+		// remove the pause class :
+		_this.$this.removeClass(_this.settings.classes.pause);
+		_this.$this.removeClass(_this.settings.classes.stop);
+
+		// update the pause state :
+		_this._isPause = false;
+		// update the state :
+		_this._isPlaying = true;
+		// the timer is started in changemedia
+		// add the play class :
+		_this.$this.addClass(_this.settings.classes.play);
+		// trigger callback :
+		if (_this.settings.onPlay) _this.settings.onPlay(_this);
+		$this.trigger('slidizle.play', [_this]);
 	}
+
+	/**
+	 * Resume :
+	 */
+	Slidizle.prototype.resume = function() {
+
+		// vars :
+		var _this = this,
+			$this = _this.$this;
+
+		// protect :
+		if ( ! _this.isPause()) return;
+
+		// start timer :
+		_this._startTimer();
+
+		// update state :
+		_this._isPause = false;
+		_this._isPlaying = true;
+
+		// trigger callback :
+		if (_this.settings.onResume) _this.settings.onResume(_this);
+		$this.trigger('slidizle.resume', [_this]);
+
+	};
 
 	/**
 	 * Pause :
 	 */
-	slidizle.prototype.pause = function()
+	Slidizle.prototype.pause = function()
 	{
 		// vars :
 		var _this = this,
 			$this = _this.$this;
 
-		// remove the play class :
-		_this.$this.removeClass(_this._getSetting('classes.play'));
-		_this.$this.removeClass(_this._getSetting('classes.stop'));
+		// protect :
+		if ( ! _this.isPlay()) return;
 
-		// check the status :
-		if (_this.isPlaying) {
-			// update the state :
-			_this.isPlaying = false;
-			// stop the timer :
-			clearInterval(_this.timer);
-			// add the pause class :
-			_this.$this.addClass(_this._getSetting('classes.pause'));
-			// trigger callback :
-			if (_this._getSetting('onPause')) _this._getSetting('onPause')(_this);
-			$this.trigger('slidizle.pause', [_this]);
-		}
+		// remove the play class :
+		_this.$this.removeClass(_this.settings.classes.play);
+		_this.$this.removeClass(_this.settings.classes.stop);
+
+		// update the pause state :
+		_this._isPause = true;
+		// update the state :
+		_this._isPlaying = false;
+		// pause the timer :
+		_this._pauseTimer();
+		// add the pause class :
+		_this.$this.addClass(_this.settings.classes.pause);
+		// trigger callback :
+		if (_this.settings.onPause) _this.settings.onPause(_this);
+		$this.trigger('slidizle.pause', [_this]);
 	}
 
 	/**
 	 * Stop :
 	 * Stop timer and reset it 
 	 */
-	slidizle.prototype.stop = function()
+	Slidizle.prototype.stop = function()
 	{
 		// vars :
 		var _this = this,
 			$this = _this.$this;
 
-		// remove the play and pause class :
-		_this.$this.removeClass(_this._getSetting('classes.play'));
-		_this.$this.removeClass(_this._getSetting('classes.pause'));
+		// protect :
+		if ( ! _this.isPlay()) return;
 
-		// check the status :
-		if (_this.isPlaying) {
-			// update the state :
-			_this.isPlaying = false;
-			// stop the timer :
-			clearInterval(_this.timer);
-			// reset the timer :
-			var t = _this.$refs.current.data('slide-timeout') || _this._getSetting('timeout');
-			_this.current_timeout_time = t;
-			// call onTimer if exist :
-			if (_this._getSetting('onTimer')) _this._getSetting('onTimer')(_this, _this.current_timeout_time, t);
-			$this.trigger('slidizle.timer', [_this, _this.current_timeout_time, t]);
-			// add the pause class :
-			_this.$this.addClass(_this._getSetting('classes.stop'));
-			// trigger callback :
-			if (_this._getSetting('onStop')) _this._getSetting('onStop')(_this);
-			$this.trigger('slidizle.stop', [_this]);
-		}
+		// remove the play and pause class :
+		_this.$this.removeClass(_this.settings.classes.play);
+		_this.$this.removeClass(_this.settings.classes.pause);
+
+		// update the pause state :
+		_this._isPause = false;
+		// update the state :
+		_this._isPlaying = false;
+		// stop the timer :
+		_this._stopTimer();
+		// add the pause class :
+		_this.$this.addClass(_this.settings.classes.stop);
+		// trigger callback :
+		if (_this.settings.onStop) _this.settings.onStop(_this);
+		$this.trigger('slidizle.stop', [_this]);
 	}
 
 	/**
 	 * Toggle play pause :
 	 */
-	slidizle.prototype.togglePlayPause = function()
+	Slidizle.prototype.togglePlayPause = function()
 	{
 		// vars :
 		var _this = this,
 			$this = _this.$this;
 
 		// check the status :
-		if (_this.isPlaying) _this.pause();
+		if (_this._isPlaying) _this.pause();
 		else _this.play();
 	}
 	
 	/**
 	 * Next media :
 	 */
-	slidizle.prototype.next = function()
+	Slidizle.prototype.next = function()
 	{
 		// vars :
 		var _this = this,
 			$this = _this.$this,
-			disabledClass = _this._getSetting('classes.disabled'),
-			loop = _this._getSetting('loop'),
-			isLoop = loop && loop != 'false';
+			disabledClass = _this.settings.classes.disabled;
 
 		// in on last item :
-		if (_this.isLast())
-		{
-			// check if on last item and the slider if on loop :
-			if ( ! isLoop) return;
-		}
+		if ( ! _this.isLoop() && _this.isLast()) return;
 
 		// saving previous :
 		_this.previous_index = _this.current_index;
@@ -969,14 +993,14 @@
 	/**
 	 * Previous media :
 	 */
-	slidizle.prototype.previous = function()
+	Slidizle.prototype.previous = function()
 	{
 		// vars :
 		var _this = this,
 			$this = _this.$this;
 		
 		// check if on last item and the slider if on loop :
-		if ( ! _this._getSetting('loop') && _this.current_index <= 0) return;	
+		if ( ! _this.isLoop() && _this.isFirst()) return;	
 
 		// saving previous :
 		_this.previous_index = _this.current_index;
@@ -996,7 +1020,7 @@
 	 *
 	 * @param 	String|int 	ref 	The slide reference (can be an index(int) or a string (class or id))
 	 */
-	slidizle.prototype.goto = function(ref)
+	Slidizle.prototype.goto = function(ref)
 	{
 		// vars :
 		var _this = this,
@@ -1037,7 +1061,7 @@
 	 *
 	 * @param 	String|int 	ref 	The slide reference (can be an index(int) or a string (class or id))
 	 */
-	slidizle.prototype.gotoAndPlay = function(ref)
+	Slidizle.prototype.gotoAndPlay = function(ref)
 	{
 		// vars :
 		var _this = this,
@@ -1055,7 +1079,7 @@
 	 *
 	 * @param 	String|int 	ref 	The slide reference (can be an index(int) or a string (class or id))
 	 */
-	slidizle.prototype.gotoAndStop = function(ref)
+	Slidizle.prototype.gotoAndStop = function(ref)
 	{
 		// vars :
 		var _this = this,
@@ -1073,7 +1097,7 @@
 	 *
 	 * @return	jQuery Object	The current media reference
 	 */
-	slidizle.prototype.getCurrentMedia = function()
+	Slidizle.prototype.getCurrentSlide = function()
 	{
 		// vars :
 		var _this = this;
@@ -1087,7 +1111,7 @@
 	 *
 	 * @return 	jQuery Object 	The previous media reference
 	 */
-	slidizle.prototype.getPreviousSlide = function() {
+	Slidizle.prototype.getPreviousSlide = function() {
 
 		// vars :
 		var _this = this;
@@ -1101,7 +1125,7 @@
 	 *
 	 * @return 	jQuery Object 	The next media reference
 	 */
-	slidizle.prototype.getNextSlide = function() {
+	Slidizle.prototype.getNextSlide = function() {
 
 		// vars :
 		var _this = this;
@@ -1116,7 +1140,7 @@
 	 *
 	 * @return	jQuery Object	All medias references
 	 */
-	slidizle.prototype.getAllSlides = function()
+	Slidizle.prototype.getAllSlides = function()
 	{
 		// vars :
 		var _this = this,
@@ -1127,16 +1151,46 @@
 	}
 
 	/**
+	 * Get settings :
+	 */
+	Slidizle.prototype.getSettings = function() {
+		return this.settings;
+	}
+
+	/**
+	 * Get remaining timeout :
+	 */
+	 Slidizle.prototype.getRemainingTimeout = function() {
+	 	return this.current_timeout_time;
+	 };
+
+	/**
+	 * Get current timeout
+	 */
+	Slidizle.prototype.getCurrentTimeout = function() {
+		var t = this.$refs.currentMedia.data('slidizle-timeout') || this.settings.timeout;
+		if ( ! t) return null;
+		return t - this.current_timeout_time;
+	};
+
+	/**
+	 * Get total timeout
+	 */
+	Slidizle.prototype.getTotalTimeout = function() {
+		return this.total_timeout_time;
+	};
+
+	/**
 	 * Return if is last or not :
 	 *
 	 * @return 	boolean 	true | false
 	 */
-	slidizle.prototype.isLast = function() {
+	Slidizle.prototype.isLast = function() {
 
 		// vars :
 		var _this = this;
 
-		return (_this.getCurrentMedia().index() >= _this.getAllMedias().length-1);
+		return (_this.getCurrentSlide().index() >= _this.getAllSlides().length-1);
 
 	}
 
@@ -1145,36 +1199,100 @@
 	 *
 	 * @return 	boolean 	true | false
 	 */
-	slidizle.prototype.isFirst = function() {
+	Slidizle.prototype.isFirst = function() {
 
 		// vars :
 		var _this = this;
 
-		return (_this.getCurrentMedia().index() <= 0);
+		return (_this.getCurrentSlide().index() <= 0);
 
 	}
+
+	/**
+	 * Is hover :
+	 */
+	Slidizle.prototype.isHover = function() {
+		return this._isOver;
+	}
+
+	/**
+	 * Is loop :
+	 */
+	Slidizle.prototype.isLoop = function() {
+		var _this = this,
+			loop = _this.settings.loop;
+		return (loop && loop != 'false');
+	};
+
+	/**
+	 * Is play :
+	 */
+	Slidizle.prototype.isPlay = function() {
+		return this._isPlaying;
+	};
+
+	/**
+	 * Is pause :
+	 */
+	Slidizle.prototype.isPause = function() {
+		return this._isPause;
+	};
+
+	/**
+	 * Is stop :
+	 */
+	Slidizle.prototype.isStop = function() {
+		return ( ! this._isPlaying && ! this._isPause);
+	};
 	
 	/**
-	 * Get setting :
-	 * this function try to get the setting asked on the html tag itself
-	 * the name has to be a string separated by the "." -> classes.loading
-	 * this function will check if data-{pluginName}-classes-loading attr ecist and return it, or return the _this._getSetting('classes.loading value if not
-	 *
-	 * @param 	string 	name 	The name of the setting to get (use dot notation) (ex : classes.loading)
+	 * Extend settings :
 	 */
-	slidizle.prototype._getSetting = function(name) {
+	Slidizle.prototype._extendSettings = function(options) {
 
 		// vars :
 		var _this = this,
 			$this = _this.$this;
 
-		// split the setting name :
-		var inline_setting = 'data-slidizle-' + name.replace('.','-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
-			inline_attr = $this.attr(inline_setting);
+		// extend with options :
+		_this.settings = $.extend(_this.settings, options, true);
 
-		// check if element has inline setting :
-		if (typeof inline_attr !== 'undefined' && inline_attr !== false) return inline_attr;
-		else return eval('_this.settings.'+name);
+		// flatten an object with parent.child.child pattern :
+		var flattenObject = function(ob) {
+			var toReturn = {};
+			for (var i in ob) {
+				
+				if (!ob.hasOwnProperty(i)) continue;
+				if ((typeof ob[i]) == 'object' && ob[i] != null) {
+					var flatObject = flattenObject(ob[i]);
+					for (var x in flatObject) {
+						if (!flatObject.hasOwnProperty(x)) continue;
+						toReturn[i + '.' + x] = flatObject[x];
+					}
+				} else {
+					toReturn[i] = ob[i];	
+				}
+			}
+			return toReturn;
+		};
+
+		// flatten the settings
+		var flatSettings = flattenObject(_this.settings);
+
+		// loop on each settings to get value on the DOM element
+		for (var name in flatSettings)
+		{
+			// split the setting name :
+			var inline_setting = 'data-slidizle-' + name.replace('.','-').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
+				inline_attr = $this.attr(inline_setting);
+
+			// check if element has inline setting :
+			if (typeof inline_attr !== 'undefined' && inline_attr !== false) {
+				// set the setting :
+				eval('_this.settings.'+name+' = '+inline_attr);
+			}
+		}
+
 	};
 	 
 	/**
@@ -1186,8 +1304,7 @@
 		var args = Array.prototype.slice.call(arguments, 1);
 
 		// check what to do :
-		if (slidizle.prototype[method])
-		{
+		if (Slidizle.prototype[method]) {
 			// apply on each elements :
 			this.each(function() {
 				// get the plugin :
@@ -1195,9 +1312,7 @@
 				// call the method on api :
 				plugin[method].apply(plugin, args);
 			});
-		}
-		else if (typeof method == 'object' || ! method)
-		{
+		} else if (typeof method == 'object' || ! method) {
 			// apply on each :
 			this.each(function() {
 				$this = $(this);
@@ -1206,25 +1321,15 @@
 				if ($this.data('slidizle_api') != null && $this.data('slidizle_api') != '') return;
 
 				// make a new instance :
-				var api = new slidizle($this, args[0]);
+				var api = new Slidizle($this, args[0]);
 
 				// save api in element :
 				$this.data('slidizle_api', api);
 			});
-		}
-		else
-		{
+		} else {
 			// error :
 			$.error( 'Method ' +  method + ' does not exist on jQuery.slidizle' );
 		}
-
-		// if ( methods[method] ) {
-		// 	return methods[method].apply( this, Array.prototype.slice.call( arguments, 1 ));
-		// } else if ( typeof method === 'object' || ! method ) {
-		// 	return methods.init.apply( this, arguments );
-		// } else {
-		// 	$.error( 'Method ' +  method + ' does not exist on jQuery.slidizle' );
-		// }    
 	}
 
 })(jQuery);

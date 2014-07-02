@@ -1,4 +1,4 @@
-# jQuery.slidizle (1.1.52)
+# jQuery.slidizle (1.3.0)
 
 This plugin allows you to create fully customizable slider. Slidizle is focused on managing your slider by just applying some classes on each of your html elements so you can have the full control over your slider look.
 
@@ -10,6 +10,11 @@ You can download or close the repo, or just use bower like this
 ```text
 bower install jquery.slidizle
 ```
+
+
+## Demo
+
+You can find some demos here : http://olivierbossel.github.io/slidizle/
 
 
 ## Get Started
@@ -128,6 +133,7 @@ There classes describe the state of your slider
 * __played__ 		: applied on the container when the slider is in play mode
 * __paused__ 		: applied on the container when the slider is in pause mode
 * __stoped__		: applied on the container when the slider is in stop mode
+* __slide-{index}__ 	: applied on the container (slide-0, slide-1, etc...)
 
 
 ## Options
@@ -243,6 +249,7 @@ Slidizle provide some attributes that you need to apply on your different html e
 * __data-slidizle-next__ 		: make the marked element a trigger to go to the next slide
 * __data-slidizle-previous__		: make the marked element a trigger to go to the previous slide
 * __data-slidizle-slide-id="..."__ 	: link a slide with a navigation element (cf the doc bellow)
+* __data-slidizle-timeout="..."__ 	: has to be applied on a slide to specify a custom timeout (milisecond)
 
 
 
@@ -256,6 +263,7 @@ Slidizle trigger some events that you can catch to make what you want at certain
 * __slidizle.previous__ 		: when go to the previous slide
 * __slidizle.play__ 		: when pass in play mode
 * __slidizle.pause__ 		: when pass in pause mode
+* __slidizle.resume__ 		: when the slider get out of pause
 * __slidizle.stop__ 		: when pass in stop mode
 * __slidizle.click__          	: when clicked on a slide
 
@@ -319,6 +327,18 @@ Return the previous slide
 
 Return all the slides
 
+### getRemainingTimeout()
+
+Return the remaining timeout until the next slide change (only if a timeout is specified in settings)
+
+### getCurrentTimeout()
+
+Return the current timeout in ms since the slide is active (only if a timeout is specified in settings)
+
+### getTotalTimeout()
+
+Return the time that the active slide has to be displayed (only if a timeout is specified in settings)
+
 ### isLast()
 
 Return true if is the last slide active
@@ -326,6 +346,30 @@ Return true if is the last slide active
 ### isFirst()
 
 Return true if is the first slide active
+
+### isLoop()
+
+Return if the slider has to loop or not
+
+### isPlay()
+
+Return if the slider is in play state
+
+### isPause()
+
+Return if the slider is in pause state
+
+### isStop()
+
+Return is the slider is in stop state
+
+### isHover()
+
+Return if the mouse if hover the slider
+
+### getSettings
+
+Return the settings of the slider
 
 
 ## Advanced usage
