@@ -238,18 +238,19 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  background: #fbd665; }
+  background: #fbd665;
+  z-index: 20; }
 
 /**
  * Animated slider
  */
-/* line 78, ../sass/style.scss */
+/* line 79, ../sass/style.scss */
 .slider--animated .slidizle-content > .active ~ .slidizle-slide {
   -moz-transform: translateX(100%);
   -ms-transform: translateX(100%);
   -webkit-transform: translateX(100%);
   transform: translateX(100%); }
-/* line 83, ../sass/style.scss */
+/* line 84, ../sass/style.scss */
 .slider--animated .slidizle-slide {
   -moz-transform: translateX(-100%);
   -ms-transform: translateX(-100%);
@@ -261,7 +262,7 @@ body {
   -webkit-transition-delay: 0s;
   transition: transform 0.5s ease-in-out 0s;
   display: block !important; }
-  /* line 88, ../sass/style.scss */
+  /* line 89, ../sass/style.scss */
   .slider--animated .slidizle-slide.active {
     -moz-transform: translateX(0);
     -ms-transform: translateX(0);
@@ -269,13 +270,13 @@ body {
     transform: translateX(0);
     z-index: 2; }
 
-/* line 97, ../sass/style.scss */
+/* line 98, ../sass/style.scss */
 .slider--animated-up-down .slidizle-content > .active ~ .slidizle-slide {
   -moz-transform: translateY(100%);
   -ms-transform: translateY(100%);
   -webkit-transform: translateY(100%);
   transform: translateY(100%); }
-/* line 102, ../sass/style.scss */
+/* line 103, ../sass/style.scss */
 .slider--animated-up-down .slidizle-slide {
   -moz-transform: translateY(-100%);
   -ms-transform: translateY(-100%);
@@ -287,7 +288,7 @@ body {
   -webkit-transition-delay: 0s;
   transition: transform 0.5s ease-in-out 0s;
   display: block !important; }
-  /* line 107, ../sass/style.scss */
+  /* line 108, ../sass/style.scss */
   .slider--animated-up-down .slidizle-slide.active {
     -moz-transform: translateY(0);
     -ms-transform: translateY(0);
@@ -298,7 +299,7 @@ body {
 /**
  * Custom navigation :
  */
-/* line 118, ../sass/style.scss */
+/* line 119, ../sass/style.scss */
 .slidizle-navigation .slider-navigation-item {
   width: 50px;
   height: 30px;
@@ -309,39 +310,39 @@ body {
 /**
  * Typography :
  */
-/* line 167, ../sass/style.scss */
+/* line 168, ../sass/style.scss */
 html {
   font: 11px/1.5 "Helvetica Neue", Helvetica, Arial, Verdana, sans-serif; }
 
-/* line 172, ../sass/style.scss */
+/* line 173, ../sass/style.scss */
 h1 {
   font-size: 50px;
   font-weight: 100; }
 
-/* line 176, ../sass/style.scss */
+/* line 177, ../sass/style.scss */
 h2 {
   font-size: 25px;
   margin-bottom: 10px; }
 
-/* line 180, ../sass/style.scss */
+/* line 181, ../sass/style.scss */
 h3 {
   font-size: 15px;
   margin-bottom: 10px; }
 
-/* line 184, ../sass/style.scss */
+/* line 185, ../sass/style.scss */
 p {
   font-size: 13px;
   color: #979797;
   margin-bottom: 20px; }
 
-/* line 189, ../sass/style.scss */
+/* line 190, ../sass/style.scss */
 strong {
   color: #fbd665; }
 
 /**
  * Buttons :
  */
-/* line 198, ../sass/style.scss */
+/* line 199, ../sass/style.scss */
 .btn.btn--custom {
   background: white;
   -moz-border-radius: 3px;
