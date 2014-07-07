@@ -5,8 +5,8 @@
  *
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
- * @updated 	01.07.2014
- * @version	1.3.12
+ * @updated 	07.07.2014
+ * @version	1.3.13
  */
 (function($) {
 	
@@ -1211,11 +1211,12 @@
 	 */
 	$.fn.slidizle = function(method) {
 
-		// store args to use later :
-		var args = Array.prototype.slice.call(arguments, 1);
-
 		// check what to do :
 		if (Slidizle.prototype[method]) {
+
+			// store args to use later :
+			var args = Array.prototype.slice.call(arguments, 1);
+
 			// apply on each elements :
 			this.each(function() {
 				// get the plugin :
@@ -1224,6 +1225,10 @@
 				plugin[method].apply(plugin, args);
 			});
 		} else if (typeof method == 'object' || ! method) {
+
+			// store args to use later :
+			var args = Array.prototype.slice.call(arguments);
+
 			// apply on each :
 			this.each(function() {
 				$this = $(this);
