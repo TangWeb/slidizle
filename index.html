@@ -15,7 +15,13 @@
 		jQuery(function($) {
 
 			// setup slidizle
-			$('[data-slidizle]').slidizle();
+			$('[data-slidizle]').slidizle({
+				beforeChange : function(api) {
+					console.log('previous', api.getPreviousSlide().index());
+					console.log('current', api.getCurrentSlide().index());
+					console.log('next', api.getNextSlide().index());
+				}
+			});
 
 		});
 

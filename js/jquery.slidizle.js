@@ -6,7 +6,7 @@
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
  * @updated 	10.07.2014
- * @version	1.3.14
+ * @version	1.3.15
  */
 (function($) {
 	
@@ -237,6 +237,9 @@
 				_this.current_index = $active_slide.index();
 			}
 				
+			// update slides refs :
+			_this._updateSlidesRefs();
+
 			// change medias for the first time :
 			_this._changeMedias();	
 
@@ -526,18 +529,12 @@
 			$this = _this.$this,
 			disabledClass = _this.settings.classes.disabled;
 
+		// update slides references :
+		_this._updateSlidesRefs();
+
 		// before change callback :
 		if (_this.settings.beforeChange) _this.settings.beforeChange(_this);
 		$this.trigger('slidizle.beforeChange', [_this]);
-
-		// save the reference to the previous media displayed :
-		_this.$refs.previousMedia = _this.$refs.currentMedia;
-	
-		// save the reference to the current media displayed :
-		_this.$refs.currentMedia = _this.$refs.content.children(':eq('+_this.current_index+')');
-
-		// save the reference to next media :
-		_this.$refs.nextMedia = _this.$refs.content.children(':eq('+_this.next_index+')');
 
 		// clear timer (relaunched on transition) :
 		_this._stopTimer();
@@ -675,6 +672,31 @@
 			if (_this.settings.afterChange) _this.settings.afterChange(_this);
 			$this.trigger('slidizle.afterChange', [_this]);
 		}
+	}
+
+	/**
+	 * Update slides refs :
+	 */
+	Slidizle.prototype._updateSlidesRefs = function() {
+
+		// vars :
+		var _this = this,
+			$this = _this.$this;
+
+		// manage indexes :
+		var cI = _this.current_index || 0,
+			nI = _this.next_index || (_this.current_index+1 < _this.total) ? _this.current_index+1 : 0,
+			pI = _this.previous_index || (_this.current_index-1 >= 0) ? _this.current_index-1 : _this.total-1;
+
+		// save the reference to the previous media displayed :
+		_this.$refs.previousMedia = _this.$refs.content.children(':eq('+pI+')');;
+	
+		// save the reference to the current media displayed :
+		_this.$refs.currentMedia = _this.$refs.content.children(':eq('+cI+')');
+
+		// save the reference to next media :
+		_this.$refs.nextMedia = _this.$refs.content.children(':eq('+nI+')');
+
 	}
 
 	/**
