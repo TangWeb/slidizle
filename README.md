@@ -279,9 +279,9 @@ Slidizle trigger some events that you can catch to make what you want at certain
 * __slidizle.beforeChange__ 	: before the change happens
 * __slidizle.change__ 		: when change to another slide
 * __slidizle.afterChange__ 	: after the change has been done
-* __sliditle.beforeLoading 	: before the loading of next slide is launched (if loadBeforeTransition is at true)
-* __sliditle.onLoading 		: during the loading of next slide (if loadBeforeTransition is at true)
-* __sliditle.afterLoading 	: after the loading of next slide is launched (if loadBeforeTransition is at true)
+* __sliditle.beforeLoading__ 	: before the loading of next slide is launched (if loadBeforeTransition is at true)
+* __sliditle.onLoading__ 	: during the loading of next slide (if loadBeforeTransition is at true)
+* __sliditle.afterLoading__ 	: after the loading of next slide is launched (if loadBeforeTransition is at true)
 * __slidizle.next__ 		: when go to the next slide
 * __slidizle.previous__ 		: when go to the previous slide
 * __slidizle.play__ 		: when pass in play mode
