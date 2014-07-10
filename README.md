@@ -141,6 +141,9 @@ There classes describe the state of your slider
 Here's the list of all the available options :
 
 ```javascript
+/**
+ * Some classes applied on different elements
+ */
 classes : {
 	
 	// class applied on content wrrapper
@@ -183,15 +186,6 @@ classes : {
 	loading 				: 'loading'				
 },					
 
-// save the transition options like duration, ease, etc (by default, no transition in js)...
-transition : {										
-	
-	// the name or callback function of the transition to use
-	callback				: null,					
-	duration				: 1000, 
-	ease					: ''
-},	
-
 // the slider interval time between each medias
 timeout					: null,
 
@@ -222,8 +216,14 @@ onInit					: null,
 // callback when a slide is clicked
 onClick					: null,						
 
+// callback before the slider change from one media to another
+beforeChange 				: null,
+
 // callback when the slider change from one media to another
 onChange				: null,						
+
+// callback after the slider change from one media to another
+afterChange  				: null,
 
 // callback when the slider change for the next slide
 onNext					: null,						
@@ -238,7 +238,7 @@ onPlay					: null,
 onPause				: null,						
 
 // callback when the slider resume after a pause
-onResume 				: null	
+onResume 				: null
 ```
 
 > All the options can be set directly on the DOM element using the pattern : __data-overlizle-{option-separated-with-dash}="{value}"__
@@ -267,7 +267,12 @@ Slidizle provide some attributes that you need to apply on your different html e
 Slidizle trigger some events that you can catch to make what you want at certain point of the code execution
 
 * __slidizle.init__ 		: when ready
+* __slidizle.beforeChange__ 	: before the change happens
 * __slidizle.change__ 		: when change to another slide
+* __slidizle.afterChange__ 	: after the change has been done
+* __sliditle.beforeLoading 	: before the loading of next slide is launched (if loadBeforeTransition is at true)
+* __sliditle.onLoading 		: during the loading of next slide (if loadBeforeTransition is at true)
+* __sliditle.afterLoading 	: after the loading of next slide is launched (if loadBeforeTransition is at true)
 * __slidizle.next__ 		: when go to the next slide
 * __slidizle.previous__ 		: when go to the previous slide
 * __slidizle.play__ 		: when pass in play mode
@@ -335,6 +340,10 @@ Return the previous slide
 ### getAllSlides()
 
 Return all the slides
+
+### getLoadingProgress()
+
+Return the loading progress of the next slide (will return 0 is the loadBeforeTransition setting is at false)
 
 ### getRemainingTimeout()
 

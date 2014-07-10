@@ -5,8 +5,8 @@
  *
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
- * @updated 	07.07.2014
- * @version	1.3.13
+ * @updated 	10.07.2014
+ * @version	1.3.14
  */
 (function($) {
 	
@@ -93,9 +93,24 @@
 			// callback when a slide is clicked
 			onClick					: null,						
 			
+			// callback before the slider change from one media to another
+			beforeChange 				: null,
+
 			// callback when the slider change from one media to another
 			onChange				: null,						
 			
+			// callback after the slider change from one media to another
+			afterChange  				: null,
+
+			// callback before the slider begin to load the slide
+			beforeLoading 				: null,
+
+			// callback during the loading progress
+			onLoading 				: null,
+
+			// callback after the slider has loaded the next slide (before the actual change)
+			afterLoading 				: null,
+
 			// callback when the slider change for the next slide
 			onNext					: null,						
 			
@@ -124,6 +139,7 @@
 			current					: null,						// save the reference to the current media displayed
 			timer 					: null						// save the reference to the timer element if exist
 		};
+		this.loadingProgress = 0; 									// store the loading progress of the next slide
 		this.current_timeout_time = 0;									// save the current time of the timeout
 		this._internalTimer = null;									// save the internal timer used to calculate the remaining timeout etc...
 		this.timeout = null;										// save the timeout for playing slider
@@ -510,6 +526,10 @@
 			$this = _this.$this,
 			disabledClass = _this.settings.classes.disabled;
 
+		// before change callback :
+		if (_this.settings.beforeChange) _this.settings.beforeChange(_this);
+		$this.trigger('slidizle.beforeChange', [_this]);
+
 		// save the reference to the previous media displayed :
 		_this.$refs.previousMedia = _this.$refs.currentMedia;
 	
@@ -577,6 +597,10 @@
 			// launch transition directly :
 			launchTransition();
 		} else {
+			// before loading callback :
+			if (_this.settings.beforeLoading) _this.settings.beforeLoading(_this);
+			$this.trigger('slidizle.beforeLoading', [_this]);
+
 			// load content of slide :
 			_this._loadSlide(_this.$refs.currentMedia, function($slide) {
 
@@ -585,6 +609,11 @@
 
 				// remove loading class :
 				_this.$refs.slider.removeClass(_this.settings.classes.loading);
+
+				// after loading callback :
+				if (_this.settings.afterLoading) _this.settings.afterLoading(_this);
+				$this.trigger('slidizle.afterLoading', [_this]);
+
 
 				// launch transition if has to be launched after loading :
 				launchTransition();
@@ -641,6 +670,10 @@
 				&& ! _this._isOver
 				&& _this.isPlay()
 			) _this._startTimer();
+
+			// after change callback :
+			if (_this.settings.afterChange) _this.settings.afterChange(_this);
+			$this.trigger('slidizle.afterChange', [_this]);
 		}
 	}
 
@@ -735,10 +768,20 @@
 			}
 		});
 
+		// loading progress :
+		_this.loadingProgress = 0;
+
 		// loaded callback :
 		function loadedCallback() {
 			// update number of elements loaded :
 			loaded++;
+
+			// calculate progress :
+			_this.loadingProgress = 100 / toLoad.length * loaded;
+
+			// onLoading callback :
+			if (_this.settings.onLoading) _this.settings.onLoading(_this);
+			$this.trigger('slidizle.onLoading', [_this]);
 
 			// check if loading is finished :
 			if (loaded >= toLoad.length) callback($content);
@@ -1063,6 +1106,13 @@
 	 */
 	Slidizle.prototype.getSettings = function() {
 		return this.settings;
+	}
+
+	/**
+	 * Get loading percentage :
+	 */
+	Slidizle.prototype.getLoadingProgress = function() {
+		return this.loadingProgress;
 	}
 
 	/**
