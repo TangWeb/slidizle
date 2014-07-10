@@ -382,7 +382,7 @@ Return if the slider has to loop or not
 
 Return if the slider is in play state
 
-### isPause()
+### isPause()
 
 Return if the slider is in pause state
 
