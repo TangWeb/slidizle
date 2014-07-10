@@ -225,6 +225,15 @@ onChange				: null,
 // callback after the slider change from one media to another
 afterChange  				: null,
 
+// callback before the slider begin to load the slide
+beforeLoading 				: null,
+
+// callback during the loading progress
+onLoading 				: null,
+
+// callback after the slider has loaded the next slide (before the actual change)
+afterLoading 				: null,
+
 // callback when the slider change for the next slide
 onNext					: null,						
 
@@ -238,7 +247,7 @@ onPlay					: null,
 onPause				: null,						
 
 // callback when the slider resume after a pause
-onResume 				: null
+onResume 				: null	
 ```
 
 > All the options can be set directly on the DOM element using the pattern : __data-overlizle-{option-separated-with-dash}="{value}"__
