@@ -141,9 +141,6 @@ There classes describe the state of your slider
 Here's the list of all the available options :
 
 ```javascript
-/**
- * Some classes applied on different elements
- */
 classes : {
 	
 	// class applied on content wrrapper
@@ -164,7 +161,7 @@ classes : {
 	// class applied on each slide
 	slide 					: 'slidizle-slide',			
 	
-	// class applied on the next and previous navigation when disabled
+	// class applied on the next and previous navigation, or the all slider when disabled
 	disabled 				: 'disabled',				
 	
 	// the play class applied on the container
@@ -210,6 +207,9 @@ touchEnabled 				: true,
 // specify if need to load the next content before the transition
 loadBeforeTransition 			: true, 						
 
+// specify if the slider is disabled or not (can be a function that return true or false)
+disabled 				: false,
+
 // callback when the slider is inited
 onInit					: null,						
 
@@ -247,7 +247,7 @@ onPlay					: null,
 onPause				: null,						
 
 // callback when the slider resume after a pause
-onResume 				: null	
+onResume 				: null		
 ```
 
 > All the options can be set directly on the DOM element using the pattern : __data-overlizle-{option-separated-with-dash}="{value}"__
@@ -381,6 +381,10 @@ Return if the slider has to loop or not
 ### isPlay()
 
 Return if the slider is in play state
+
+### isDisabled()
+
+Return if the slider is disabled or not
 
 ### isPause()
 

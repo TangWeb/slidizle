@@ -5,8 +5,8 @@
  *
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
- * @updated 	10.07.2014
- * @version	1.3.15
+ * @updated 	14.07.2014
+ * @version	1.3.16
  */
 (function($) {
 	
@@ -41,7 +41,7 @@
 				// class applied on each slide
 				slide 					: 'slidizle-slide',			
 				
-				// class applied on the next and previous navigation when disabled
+				// class applied on the next and previous navigation, or the all slider when disabled
 				disabled 				: 'disabled',				
 				
 				// the play class applied on the container
@@ -87,6 +87,9 @@
 			// specify if need to load the next content before the transition
 			loadBeforeTransition 			: true, 						
 			
+			// specify if the slider is disabled or not (can be a function that return true or false)
+			disabled 				: false,
+
 			// callback when the slider is inited
 			onInit					: null,						
 			
@@ -820,6 +823,9 @@
 		var _this = this,
 			$this = _this.$this;
 
+		// do nothing if disabled :
+		if (_this.isDisabled()) return;
+
 		// protect :
 		if (_this._isPlaying || ! _this.getTotalTimeout() || ! _this.$refs.medias.length) return;	
 
@@ -848,6 +854,9 @@
 		var _this = this,
 			$this = _this.$this;
 
+		// do nothing if disabled :
+		if (_this.isDisabled()) return;
+
 		// protect :
 		if ( ! _this.isPause()) return;
 
@@ -872,6 +881,9 @@
 		// vars :
 		var _this = this,
 			$this = _this.$this;
+
+		// do nothing if disabled :
+		if (_this.isDisabled()) return;
 
 		// protect :
 		if ( ! _this.isPlay()) return;
@@ -903,6 +915,9 @@
 		var _this = this,
 			$this = _this.$this;
 
+		// do nothing if disabled :
+		if (_this.isDisabled()) return;
+
 		// protect :
 		if ( ! _this.isPlay()) return;
 
@@ -932,6 +947,9 @@
 		var _this = this,
 			$this = _this.$this;
 
+		// do nothing if disabled :
+		if (_this.isDisabled()) return;
+
 		// check the status :
 		if (_this._isPlaying) _this.pause();
 		else _this.play();
@@ -946,6 +964,9 @@
 		var _this = this,
 			$this = _this.$this,
 			disabledClass = _this.settings.classes.disabled;
+
+		// do nothing if disabled :
+		if (_this.isDisabled()) return;
 
 		// in on last item :
 		if ( ! _this.isLoop() && _this.isLast()) return;
@@ -972,6 +993,9 @@
 		var _this = this,
 			$this = _this.$this;
 		
+		// do nothing if disabled :
+		if (_this.isDisabled()) return;
+
 		// check if on last item and the slider if on loop :
 		if ( ! _this.isLoop() && _this.isFirst()) return;	
 
@@ -999,6 +1023,9 @@
 		var _this = this,
 			$this = _this.$this,
 			$slide = null;
+
+		// do nothing if disabled :
+		if (_this.isDisabled()) return;
 
 		// check the ref :
 		if (typeof ref == 'string') {
@@ -1040,6 +1067,9 @@
 		var _this = this,
 			$this = _this.$this;
 
+		// do nothing if disabled :
+		if (_this.isDisabled()) return;
+
 		// go to a slide :
 		_this.gotoSlide(ref);
 
@@ -1057,6 +1087,9 @@
 		// vars :
 		var _this = this,
 			$this = _this.$this;
+
+		// do nothing if disabled :
+		if (_this.isDisabled()) return;
 
 		// go to a slide :
 		_this.gotoSlide(ref);
@@ -1193,6 +1226,23 @@
 	 */
 	Slidizle.prototype.isHover = function() {
 		return this._isOver;
+	}
+
+	/**
+	 * Is disabled :
+	 */
+	Slidizle.prototype.isDisabled = function() {
+		// check if is disabled :
+		var disabled = false;
+		if (typeof this.settings.disabled == 'function') disabled = this.settings.disabled();
+		else disabled = this.settings.disabled;
+
+		// manage disabled class :
+		if (disabled) this.$this.addClass(this.settings.classes.disabled);
+		else this.$this.removeClass(this.settings.classes.disabled);
+
+		// return the result :
+		return disabled;
 	}
 
 	/**
