@@ -1234,7 +1234,7 @@
 	Slidizle.prototype.isDisabled = function() {
 		// check if is disabled :
 		var disabled = false;
-		if (typeof this.settings.disabled == 'function') disabled = this.settings.disabled();
+		if (typeof this.settings.disabled == 'function') disabled = this.settings.disabled(this);
 		else disabled = this.settings.disabled;
 
 		// manage disabled class :

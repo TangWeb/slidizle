@@ -16,7 +16,6 @@
 
 			// setup slidizle
 			$('[data-slidizle]').slidizle({
-				disabled : true,
 				beforeChange : function(api) {
 					console.log('previous', api.getPreviousSlide().index());
 					console.log('current', api.getCurrentSlide().index());
