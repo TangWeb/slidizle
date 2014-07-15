@@ -5,11 +5,22 @@
  *
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
- * @updated 	14.07.2014
- * @version	1.3.16
+ * @updated 	15.07.2014
+ * @version	1.3.17
  */
-(function($) {
-	
+(function (factory) {
+	if (typeof define === 'function' && define.amd) {
+		// AMD. Register as an anonymous module.
+		define(['jquery'], factory);
+	} else if (typeof exports === 'object') {
+		// Node/CommonJS
+		factory(require('jquery'));
+	} else {
+		// Browser globals
+		factory(jQuery);
+	}
+}(function ($) {
+
 	/**
 	 * Plugin :
 	 */
@@ -1174,7 +1185,7 @@
 	 * Get remaining timeout :
 	 */
 	 Slidizle.prototype.getRemainingTimeout = function() {
-	 	return this.current_timeout_time;
+		return this.current_timeout_time;
 	 };
 
 	/**
@@ -1234,7 +1245,7 @@
 	Slidizle.prototype.isDisabled = function() {
 		// check if is disabled :
 		var disabled = false;
-		if (typeof this.settings.disabled == 'function') disabled = this.settings.disabled(this);
+		if (typeof this.settings.disabled == 'function') disabled = this.settings.disabled();
 		else disabled = this.settings.disabled;
 
 		// manage disabled class :
@@ -1373,23 +1384,7 @@
 		return this;
 	}
 
-	/**
-	 * Expose to AMD
-	 */
-	if (typeof window.define === 'function' && window.define.amd) {
-		return window.define(['jquery'], function() {
-			return window.Slidizle;
-		});
-	}
+	// return plugin :
+	return Slidizle;
 
-})(jQuery);
-(function($) {
-	// check auto init :
-	$.fn.l = $.fn.livequery || $.fn.each;
-	if (typeof autoinit != 'undefined' && autoinit.slidizle) {
-		var settings = (typeof autoinit.slidizle == 'object') ? autoinit.slidizle : {};
-		$('[data-slidizle]').l(function() {
-			$(this).slidizle(settings);
-		});
-	}
-})(jQuery);
+}));
