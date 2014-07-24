@@ -1,4 +1,4 @@
-# jQuery.slidizle (1.3.18)
+# jQuery.slidizle (1.3.19)
 
 This plugin allows you to create fully customizable slider. Slidizle is focused on managing your slider by just applying some classes on each of your html elements so you can have the full control over your slider look.
 
@@ -134,6 +134,7 @@ There classes describe the state of your slider
 * __paused__ 		: applied on the container when the slider is in pause mode
 * __stoped__		: applied on the container when the slider is in stop mode
 * __slide-{index}__ 	: applied on the container (slide-0, slide-1, etc...)
+* __loaded-slide-{index}__ 	: same as slide-{index} but applied only when the slide is loaded
 
 
 ## Options

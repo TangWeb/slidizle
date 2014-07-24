@@ -6,7 +6,7 @@
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
  * @updated 	24.07.2014
- * @version	1.3.18
+ * @version	1.3.19
  */
 (function (factory) {
 	if (typeof define === 'function' && define.amd) {
@@ -635,6 +635,12 @@
 		// launch transition and dispatch en change event :
 		function launchTransition()
 		{
+			// remove the class of the current media on the container :
+			if (_this.$refs.previousActiveMedia) _this.$this.removeClass('loaded-slide-'+_this.$refs.previousActiveMedia.index());
+
+			// set the class of the current media on the container :
+			_this.$this.addClass('loaded-slide-'+_this.$refs.currentMedia.index());
+
 			// delete active_class before change :
 			_this.$refs.medias.removeClass(_this.settings.classes.active);
 
