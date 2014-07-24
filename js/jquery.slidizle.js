@@ -5,8 +5,8 @@
  *
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
- * @updated 	15.07.2014
- * @version	1.3.17
+ * @updated 	24.07.2014
+ * @version	1.3.18
  */
 (function (factory) {
 	if (typeof define === 'function' && define.amd) {
@@ -160,6 +160,7 @@
 		this.previous_index = 0;									// save the index of the previous media displayed
 		this.current_index = 0;										// save the index of the current media displayed
 		this.next_index = 0; 										// save the index of the next media
+		this._previous_active_index = 0; 								// save the index of the previous activate media
 		this._isPlaying = false;										// save the playing state
 		this._isPause = false;										// save the pause status
 		this._isOver = false;										// save the over state
@@ -591,7 +592,7 @@
 		});
 
 		// remove the class of the current media on the container :
-		if (_this.$refs.previousMedia) _this.$this.removeClass('slide-'+_this.$refs.previousMedia.index());
+		if (_this.$refs.previousActiveMedia) _this.$this.removeClass('slide-'+_this.$refs.previousActiveMedia.index());
 
 		// set the class of the current media on the container :
 		_this.$this.addClass('slide-'+_this.$refs.currentMedia.index());
@@ -702,9 +703,12 @@
 			nI = _this.next_index || (_this.current_index+1 < _this.total) ? _this.current_index+1 : 0,
 			pI = _this.previous_index || (_this.current_index-1 >= 0) ? _this.current_index-1 : _this.total-1;
 
+		// save the reference to previous activate media :
+		if ( _this.$refs.currentMedia) _this.$refs.previousActiveMedia = _this.$refs.currentMedia;
+
 		// save the reference to the previous media displayed :
 		_this.$refs.previousMedia = _this.$refs.content.children(':eq('+pI+')');;
-	
+
 		// save the reference to the current media displayed :
 		_this.$refs.currentMedia = _this.$refs.content.children(':eq('+cI+')');
 
@@ -981,13 +985,16 @@
 
 		// in on last item :
 		if ( ! _this.isLoop() && _this.isLast()) return;
-
-		// saving previous :
-		_this.previous_index = _this.current_index;
 		
+		// save previous active index :
+		_this._previous_active_index = _this.current_index;
+
 		// managing current :
 		_this.current_index = (_this.current_index+1 < _this.total) ? _this.current_index+1 : 0;
 		
+		// saving previous :
+		_this.previous_index = (_this.current_index-1 >= 0) ? _this.current_index-1 : _this.total-1;
+
 		// managing next :
 		_this.next_index = (_this.current_index+1 < _this.total) ? _this.current_index+1 : 0;
 
@@ -1010,12 +1017,15 @@
 		// check if on last item and the slider if on loop :
 		if ( ! _this.isLoop() && _this.isFirst()) return;	
 
-		// saving previous :
-		_this.previous_index = _this.current_index;
-		
+		// save previous active index :
+		_this._previous_active_index = _this.current_index;
+
 		// managing current :
 		_this.current_index = (_this.current_index-1 < 0) ? _this.total-1 : _this.current_index-1;
 		
+		// saving previous :
+		_this.previous_index = (_this.current_index-1 >= 0) ? _this.current_index-1 : _this.total-1;
+
 		// managing next :
 		_this.next_index = (_this.current_index+1 < _this.total) ? _this.current_index+1 : 0;
 
@@ -1074,18 +1084,14 @@
 	 */
 	Slidizle.prototype.gotoAndPlay = function(ref)
 	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-
 		// do nothing if disabled :
-		if (_this.isDisabled()) return;
+		if (this.isDisabled()) return;
 
 		// go to a slide :
-		_this.gotoSlide(ref);
+		this.gotoSlide(ref);
 
 		// play :
-		_this.play();
+		this.play();
 	}
 
 	/**
@@ -1095,18 +1101,14 @@
 	 */
 	Slidizle.prototype.gotoAndStop = function(ref)
 	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-
 		// do nothing if disabled :
-		if (_this.isDisabled()) return;
+		if (this.isDisabled()) return;
 
 		// go to a slide :
-		_this.gotoSlide(ref);
+		this.gotoSlide(ref);
 
 		// play :
-		_this.stop();
+		this.stop();
 	}
 	
 	/**
@@ -1114,13 +1116,8 @@
 	 *
 	 * @return	jQuery Object	The current media reference
 	 */
-	Slidizle.prototype.getCurrentSlide = function()
-	{
-		// vars :
-		var _this = this;
-		
-		// return the current media reference :
-		return _this.$refs.currentMedia;
+	Slidizle.prototype.getCurrentSlide = function() {
+		return this.$refs.currentMedia;
 	}
 
 	/**
@@ -1129,12 +1126,7 @@
 	 * @return 	jQuery Object 	The previous media reference
 	 */
 	Slidizle.prototype.getPreviousSlide = function() {
-
-		// vars :
-		var _this = this;
-
-		// return the previous media :
-		return _this.$refs.previousMedia;
+		return this.$refs.previousMedia;
 	}
 
 	/**
@@ -1143,13 +1135,14 @@
 	 * @return 	jQuery Object 	The next media reference
 	 */
 	Slidizle.prototype.getNextSlide = function() {
+		return this.$refs.nextMedia;
+	}
 
-		// vars :
-		var _this = this;
-
-		// get the next media :
-		return _this.$refs.nextMedia;
-
+	/**
+	 * Get the previous active slide
+	 */
+	Slidizle.prototype.getPreviousActiveSlide = function() {
+		return this.$refs.previousActiveMedia;
 	}
 	
 	/**
@@ -1157,14 +1150,8 @@
 	 *
 	 * @return	jQuery Object	All medias references
 	 */
-	Slidizle.prototype.getAllSlides = function()
-	{
-		// vars :
-		var _this = this,
-			$this = _this.$this;
-		
-		// return all medias :
-		return _this.$refs.medias;
+	Slidizle.prototype.getAllSlides = function() {
+		return this.$refs.medias;
 	}
 
 	/**
@@ -1210,12 +1197,7 @@
 	 * @return 	boolean 	true | false
 	 */
 	Slidizle.prototype.isLast = function() {
-
-		// vars :
-		var _this = this;
-
-		return (_this.getCurrentSlide().index() >= _this.getAllSlides().length-1);
-
+		return (this.getCurrentSlide().index() >= this.getAllSlides().length-1);
 	}
 
 	/**
@@ -1224,12 +1206,7 @@
 	 * @return 	boolean 	true | false
 	 */
 	Slidizle.prototype.isFirst = function() {
-
-		// vars :
-		var _this = this;
-
-		return (_this.getCurrentSlide().index() <= 0);
-
+		return (this.getCurrentSlide().index() <= 0);
 	}
 
 	/**
@@ -1260,8 +1237,7 @@
 	 * Is loop :
 	 */
 	Slidizle.prototype.isLoop = function() {
-		var _this = this,
-			loop = _this.settings.loop;
+		var loop = this.settings.loop;
 		return (loop && loop != 'false');
 	};
 
