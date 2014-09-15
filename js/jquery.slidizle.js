@@ -5,8 +5,8 @@
  *
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
- * @updated 	24.07.2014
- * @version	1.3.19
+ * @updated 	15.09.2014
+ * @version	1.3.20
  */
 (function (factory) {
 	if (typeof define === 'function' && define.amd) {
@@ -223,6 +223,9 @@
 			_this.$refs.medias = _this.$refs.content.children(content_childs_type);
 		}
 		
+		// apply class :
+		$this.addClass(_this.settings.classes.slider);
+
 		// check if are some medias :
 		if (_this.$refs.medias) {
 
@@ -254,9 +257,6 @@
 				
 			// update slides refs :
 			_this._updateSlidesRefs();
-
-			// change medias for the first time :
-			_this._changeMedias();	
 
 			// check if pauseOnHover is set to true :
 			if (_this.settings.pauseOnHover) {
@@ -291,14 +291,20 @@
 				});
 			}
 
+			// check the on init :
+			if (_this.settings.onInit) _this.settings.onInit(_this);
+			$this.trigger('slidizle.init', [_this]);
+
+			// change medias for the first time :
+			_this._changeMedias();	
+
+		} else {
+
+			// check the on init :
+			if (_this.settings.onInit) _this.settings.onInit(_this);
+			$this.trigger('slidizle.init', [_this]);
+
 		}
-
-		// apply class :
-		$this.addClass(_this.settings.classes.slider);
-
-		// check the on init :
-		if (_this.settings.onInit) _this.settings.onInit(_this);
-		$this.trigger('slidizle.init', [_this]);
 		
 	}
 	
