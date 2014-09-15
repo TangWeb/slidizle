@@ -165,6 +165,12 @@ classes : {
 	// class applied on the next and previous navigation, or the all slider when disabled
 	disabled 				: 'disabled',				
 	
+	// the class applied on container when the slider is at his first slide
+	first 					: 'first',
+
+	// the class applied on container when the slider is at his last slide
+	last 					: 'last',		
+
 	// the play class applied on the container
 	play 					: 'played',				
 	

@@ -6,7 +6,7 @@
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
  * @updated 	15.09.2014
- * @version	1.3.20
+ * @version	1.3.21
  */
 (function (factory) {
 	if (typeof define === 'function' && define.amd) {
@@ -55,6 +55,12 @@
 				// class applied on the next and previous navigation, or the all slider when disabled
 				disabled 				: 'disabled',				
 				
+				// the class applied on container when the slider is at his first slide
+				first 					: 'first',
+
+				// the class applied on container when the slider is at his last slide
+				last 					: 'last',
+
 				// the play class applied on the container
 				play 					: 'played',				
 				
@@ -602,6 +608,12 @@
 
 		// set the class of the current media on the container :
 		_this.$this.addClass('slide-'+_this.$refs.currentMedia.index());
+
+		// manage first and last class :
+		if (_this.isLast()) _this.$this.addClass(_this.settings.classes.last);
+		else _this.$this.removeClass(_this.settings.classes.last);
+		if (_this.isFirst()) _this.$this.addClass(_this.settings.classes.first);
+		else _this.$this.removeClass(_this.settings.classes.first);
 
 		// add the loading clas to the slider :
 		_this.$refs.slider.addClass(_this.settings.classes.loading);
