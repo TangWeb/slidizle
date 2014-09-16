@@ -5,8 +5,8 @@
  *
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
- * @updated 	15.09.2014
- * @version	1.3.21
+ * @updated 16.09.2014
+ * @version	1.3.22
  */
 (function (factory) {
 	if (typeof define === 'function' && define.amd) {
@@ -43,6 +43,12 @@
 				// class applied on previous navigation element
 				previous 				: 'slidizle-previous',			
 				
+				// class applied on container when the slider is in forward mode
+				forward 				: 'forward',
+
+				// class applied on container when the slider is in backward mode
+				backward 				: 'backward',			
+
 				// class applied on navigation element
 				navigation 				: 'slidizle-navigation',			
 				
@@ -301,8 +307,11 @@
 			if (_this.settings.onInit) _this.settings.onInit(_this);
 			$this.trigger('slidizle.init', [_this]);
 
+			// add forward class :
+			_this.$this.addClass(_this.settings.classes.forward);
+
 			// change medias for the first time :
-			_this._changeMedias();	
+			_this._changeMedias();
 
 		} else {
 
@@ -644,7 +653,6 @@
 				if (_this.settings.afterLoading) _this.settings.afterLoading(_this);
 				$this.trigger('slidizle.afterLoading', [_this]);
 
-
 				// launch transition if has to be launched after loading :
 				launchTransition();
 			});
@@ -872,13 +880,20 @@
 		_this.$this.removeClass(_this.settings.classes.pause);
 		_this.$this.removeClass(_this.settings.classes.stop);
 
+		// add the play class :
+		_this.$this.addClass(_this.settings.classes.play);
+
 		// update the pause state :
 		_this._isPause = false;
 		// update the state :
 		_this._isPlaying = true;
+
+		// reset the timeout :
+		_this._resetTimer();
+
 		// the timer is started in changemedia
-		// add the play class :
-		_this.$this.addClass(_this.settings.classes.play);
+		_this._startTimer();
+		
 		// trigger callback :
 		if (_this.settings.onPlay) _this.settings.onPlay(_this);
 		$this.trigger('slidizle.play', [_this]);
@@ -898,6 +913,13 @@
 
 		// protect :
 		if ( ! _this.isPause()) return;
+
+		// remove the pause class :
+		_this.$this.removeClass(_this.settings.classes.pause);
+		_this.$this.removeClass(_this.settings.classes.stop);
+
+		// add the play class :
+		_this.$this.addClass(_this.settings.classes.play);
 
 		// start timer :
 		_this._startTimer();
@@ -935,10 +957,13 @@
 		_this._isPause = true;
 		// update the state :
 		_this._isPlaying = false;
+
 		// pause the timer :
 		_this._pauseTimer();
+		
 		// add the pause class :
 		_this.$this.addClass(_this.settings.classes.pause);
+		
 		// trigger callback :
 		if (_this.settings.onPause) _this.settings.onPause(_this);
 		$this.trigger('slidizle.pause', [_this]);
@@ -1009,7 +1034,11 @@
 
 		// in on last item :
 		if ( ! _this.isLoop() && _this.isLast()) return;
-		
+
+		// manage the backward forward class on container :
+		_this.$this.removeClass(_this.settings.classes.backward);
+		_this.$this.addClass(_this.settings.classes.forward);
+
 		// save previous active index :
 		_this._previous_active_index = _this.current_index;
 
@@ -1040,6 +1069,10 @@
 
 		// check if on last item and the slider if on loop :
 		if ( ! _this.isLoop() && _this.isFirst()) return;	
+
+		// manage the backward forward class on container :
+		_this.$this.removeClass(_this.settings.classes.forward);
+		_this.$this.addClass(_this.settings.classes.backward);
 
 		// save previous active index :
 		_this._previous_active_index = _this.current_index;
@@ -1212,7 +1245,7 @@
 	 * Get total timeout
 	 */
 	Slidizle.prototype.getTotalTimeout = function() {
-		return this.total_timeout_time;
+		return this.total_timeout_time || this.settings.timeout || false;
 	};
 
 	/**
