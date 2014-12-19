@@ -580,7 +580,7 @@
 		{
 			if (_this.isLast() && ! _this.isLoop())
 			{
-				_this.$refs.next.addClass('disabled');
+				_this.$refs.next.addClass(disabledClass);
 			} else {
 				if (_this.$refs.next.hasClass(disabledClass)) _this.$refs.next.removeClass(disabledClass);
 			}
