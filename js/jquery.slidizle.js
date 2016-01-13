@@ -5,8 +5,8 @@
  *
  * @author	Olivier Bossel (andes)
  * @created	21.02.2012
- * @updated 16.09.2014
- * @version	1.3.22
+ * @updated 13.01.2016
+ * @version	1.3.23
  */
 (function (factory) {
 	if (typeof define === 'function' && define.amd) {
@@ -43,6 +43,18 @@
 				// class applied on previous navigation element
 				previous 				: 'slidizle-previous',			
 				
+				// class applied on all slides that are before the active one
+				beforeActive 			: 'before-active',
+
+				// class applied on all slides that are after the active one
+				afterActive 			: 'after-active',
+
+				// class applied on the next active slide
+				nextActive 				: 'next',
+
+				// class applied on the previous active slide
+				previousActive 			: 'previous',
+
 				// class applied on container when the slider is in forward mode
 				forward 				: 'forward',
 
@@ -156,9 +168,11 @@
 			slider					: null,						// save the reference to the slider container itself
 			content					: null,						// save the reference to the content element
 			medias					: null,						// save the references to all medias element
-			nextMedia 				: null,						// save the reference to the next media element
-			previousMedia 				: null,						// save the reference to the previous media element
-			currentMedia 				: null,						// save the reference to the current media element
+			nextSlide 				: null,						// save the reference to the next media element
+			previousSlide 			: null,						// save the reference to the previous media element
+			currentSlide 			: null,						// save the reference to the current media element
+			beforeActiveSlides 		: null,
+			afterActiveSlides 		: null,
 			navigation				: null,						// save the reference to the navigation element
 			next					: null,						// save the reference to the next button element
 			previous				: null,						// save the reference to the previous button element
@@ -237,6 +251,9 @@
 		
 		// apply class :
 		$this.addClass(_this.settings.classes.slider);
+		_this.$refs.medias.filter(':first-child').addClass(_this.settings.classes.first);
+		_this.$refs.medias.filter(':last-child').addClass(_this.settings.classes.last);
+
 
 		// check if are some medias :
 		if (_this.$refs.medias) {
@@ -334,7 +351,10 @@
 
 		// check if is an navigation tag :
 		if (!_this.$refs.navigation) return false;
-		
+
+		// check if we need to hide navigation if only 1 element
+		if (_this.total <= 1) _this.$refs.navigation.hide();
+
 		// check if we have to popule the navigation :
 		if (_this.$refs.navigation.children().length <= 0)
 		{
@@ -524,8 +544,8 @@
 		var _this = this;
 
 		// reset values :
-		_this.current_timeout_time = _this.$refs.currentMedia.data('slidizle-timeout') || _this.settings.timeout;
-		_this.total_timeout_time = _this.$refs.currentMedia.data('slidizle-timeout') || _this.settings.timeout;
+		_this.current_timeout_time = _this.$refs.currentSlide.data('slidizle-timeout') || _this.settings.timeout;
+		_this.total_timeout_time = _this.$refs.currentSlide.data('slidizle-timeout') || _this.settings.timeout;
 
 	};
 
@@ -596,7 +616,7 @@
 		}
 
 		// manage navigation classes :
-		var current_slide_id = _this.$refs.currentMedia.attr('data-slidizle-slide-id');
+		var current_slide_id = _this.$refs.currentSlide.attr('data-slidizle-slide-id');
 		_this.$refs.navigation.each(function() {
 			var $nav = $(this),
 				current_navigation_by_slide_id = $(this).children('[data-slidizle-slide-id="'+current_slide_id+'"]');
@@ -612,23 +632,11 @@
 
 		});
 
-		// remove the class of the current media on the container :
-		if (_this.$refs.previousActiveMedia) _this.$this.removeClass('slide-'+_this.$refs.previousActiveMedia.index());
-
-		// set the class of the current media on the container :
-		_this.$this.addClass('slide-'+_this.$refs.currentMedia.index());
-
-		// manage first and last class :
-		if (_this.isLast()) _this.$this.addClass(_this.settings.classes.last);
-		else _this.$this.removeClass(_this.settings.classes.last);
-		if (_this.isFirst()) _this.$this.addClass(_this.settings.classes.first);
-		else _this.$this.removeClass(_this.settings.classes.first);
-
-		// add the loading clas to the slider :
+		// add the loading class to the slider :
 		_this.$refs.slider.addClass(_this.settings.classes.loading);
 
 		// add load class on current element :
-		_this.$refs.currentMedia.addClass(_this.settings.classes.loading);
+		_this.$refs.currentSlide.addClass(_this.settings.classes.loading);
 
 		// launch transition :
 		if ( ! _this.settings.loadBeforeTransition || _this.settings.loadBeforeTransition == 'false') 
@@ -641,7 +649,7 @@
 			$this.trigger('slidizle.beforeLoading', [_this]);
 
 			// load content of slide :
-			_this._loadSlide(_this.$refs.currentMedia, function($slide) {
+			_this._loadSlide(_this.$refs.currentSlide, function($slide) {
 
 				// remove loading class
 				$slide.removeClass(_this.settings.classes.loading);
@@ -662,42 +670,72 @@
 		function launchTransition()
 		{
 			// remove the class of the current media on the container :
-			if (_this.$refs.previousActiveMedia) _this.$this.removeClass('loaded-slide-'+_this.$refs.previousActiveMedia.index());
+			if (_this.$refs.previousActiveSlide) _this.$this.removeClass('slide-'+_this.$refs.previousActiveSlide.index());
 
 			// set the class of the current media on the container :
-			_this.$this.addClass('loaded-slide-'+_this.$refs.currentMedia.index());
+			_this.$this.addClass('slide-'+_this.$refs.currentSlide.index());
+
+			// manage first and last class :
+			if (_this.isLast()) _this.$this.addClass(_this.settings.classes.last);
+			else _this.$this.removeClass(_this.settings.classes.last);
+			if (_this.isFirst()) _this.$this.addClass(_this.settings.classes.first);
+			else _this.$this.removeClass(_this.settings.classes.first);
+
+			// remove the class of the current media on the container :
+			if (_this.$refs.previousActiveSlide) _this.$this.removeClass('loaded-slide-'+_this.$refs.previousActiveSlide.index());
+
+			// set the class of the current media on the container :
+			_this.$this.addClass('loaded-slide-'+_this.$refs.currentSlide.index());
 
 			// delete active_class before change :
 			_this.$refs.medias.removeClass(_this.settings.classes.active);
 
-			// delete active_class before change :
-			_this.$refs.currentMedia.addClass(_this.settings.classes.active);
+			// add active_class before change :
+			_this.$refs.currentSlide.addClass(_this.settings.classes.active);
 			
+			// remove the before active and after active class
+			_this.$refs.medias
+			.removeClass(_this.settings.classes.beforeActive)
+			.removeClass(_this.settings.classes.afterActive);
+
+			// add the before active class
+			_this.getBeforeActiveSlides().addClass(_this.settings.classes.beforeActive);
+			_this.getAfterActiveSlides().addClass(_this.settings.classes.afterActive);
+
+			// remove the previous and next class
+			_this.$refs.medias
+			.removeClass(_this.settings.classes.previousActive)
+			.removeClass(_this.settings.classes.nextActive);
+
+			// add the previous and next class
+			_this.getPreviousSlide().addClass(_this.settings.classes.previousActive);
+			_this.getNextSlide().addClass(_this.settings.classes.nextActive);
+
 			// callback :
 			if (_this.settings.onChange) _this.settings.onChange(_this);
 			$this.trigger('slidizle.change', [_this]);
 
 			// manage onNext onPrevious events :
-			if (_this.$refs.currentMedia.index() == 0 && _this.$refs.previousMedia)
+			if (_this.$refs.currentSlide.index() == 0 && _this.$refs.previousSlide)
 			{
-				if (_this.$refs.previousMedia.index() == _this.$refs.medias.length-1) {
+				if (_this.$refs.previousSlide.index() == _this.$refs.medias.length-1) {
 					if (_this.settings.onNext) _this.settings.onNext(_this);
 					$this.trigger('slidizle.next', [_this]);
 				} else {
 					if (_this.settings.onPrevious) _this.settings.onPrevious(_this);
 					$this.trigger('slidizle.previous', [_this]);
 				}
-			} else if (_this.$refs.currentMedia.index() == _this.$refs.medias.length-1 && _this.$refs.previousMedia)
+			} else if (_this.$refs.currentSlide.index() == _this.$refs.medias.length-1 && _this.$refs.previousSlide)
 			{
-				if (_this.$refs.previousMedia.index() == 0) {
+				if (_this.$refs.previousSlide.index() == 0) {
 					if (_this.settings.onPrevious) _this.settings.onPrevious(_this);
 					$this.trigger('slidizle.previous', [_this]);
 				} else {
 					if (_this.settings.onNext) _this.settings.onNext(_this);
 					$this.trigger('slidizle.next', [_this]);
 				}
-			} else if (_this.$refs.previousMedia) {
-				if (_this.$refs.currentMedia.index() > _this.$refs.previousMedia.index()) {
+			} else if (_this.$refs.previousSlide) {
+				if (_this.$refs.currentSlide.index() > _this.$refs.previousSlide.index()) {
 					if (_this.settings.onNext) _this.settings.onNext(_this);
 					$this.trigger('slidizle.next', [_this]);
 				} else {
@@ -736,16 +774,22 @@
 			pI = _this.previous_index || (_this.current_index-1 >= 0) ? _this.current_index-1 : _this.total-1;
 
 		// save the reference to previous activate media :
-		if ( _this.$refs.currentMedia) _this.$refs.previousActiveMedia = _this.$refs.currentMedia;
+		if ( _this.$refs.currentSlide) _this.$refs.previousActiveSlide = _this.$refs.currentSlide;
 
 		// save the reference to the previous media displayed :
-		_this.$refs.previousMedia = _this.$refs.content.children(':eq('+pI+')');;
+		_this.$refs.previousSlide = _this.$refs.content.children(':eq('+pI+')');;
 
 		// save the reference to the current media displayed :
-		_this.$refs.currentMedia = _this.$refs.content.children(':eq('+cI+')');
+		_this.$refs.currentSlide = _this.$refs.content.children(':eq('+cI+')');
 
 		// save the reference to next media :
-		_this.$refs.nextMedia = _this.$refs.content.children(':eq('+nI+')');
+		_this.$refs.nextSlide = _this.$refs.content.children(':eq('+nI+')');
+
+		// save the before active slides refs :
+		_this.$refs.beforeActiveSlides = _this.$refs.medias.filter(':lt('+cI+')');
+
+		// save the after active slides refs :
+		_this.$refs.afterActiveSlides = _this.$refs.medias.filter(':gt('+cI+')');
 
 	}
 
@@ -1174,8 +1218,13 @@
 	 * @return	jQuery Object	The current media reference
 	 */
 	Slidizle.prototype.getCurrentSlide = function() {
-		return this.$refs.currentMedia;
+		return this.$refs.currentSlide;
 	}
+
+	/**
+	 * Get active slide (alias)
+	 */
+	Slidizle.prototype.getActiveSlide = Slidizle.prototype.getCurrentSlide;
 
 	/**
 	 * Get previous slide :
@@ -1183,7 +1232,7 @@
 	 * @return 	jQuery Object 	The previous media reference
 	 */
 	Slidizle.prototype.getPreviousSlide = function() {
-		return this.$refs.previousMedia;
+		return this.$refs.previousSlide;
 	}
 
 	/**
@@ -1192,14 +1241,32 @@
 	 * @return 	jQuery Object 	The next media reference
 	 */
 	Slidizle.prototype.getNextSlide = function() {
-		return this.$refs.nextMedia;
+		return this.$refs.nextSlide;
+	}
+
+	/**
+	 * Get the before active slides
+	 *
+	 * @return 	jQuery Object 		All the slides that are before the active one
+	 */
+	Slidizle.prototype.getBeforeActiveSlides = function() {
+		return this.$refs.beforeActiveSlides;
+	}
+
+	/**
+	 * Get the after active slides
+	 *
+	 * @return 	jQuery Object 		All the slides that are after the active one
+	 */
+	Slidizle.prototype.getAfterActiveSlides = function() {
+		return this.$refs.afterActiveSlides;	
 	}
 
 	/**
 	 * Get the previous active slide
 	 */
 	Slidizle.prototype.getPreviousActiveSlide = function() {
-		return this.$refs.previousActiveMedia;
+		return this.$refs.previousActiveSlide;
 	}
 	
 	/**
@@ -1236,7 +1303,7 @@
 	 * Get current timeout
 	 */
 	Slidizle.prototype.getCurrentTimeout = function() {
-		var t = this.$refs.currentMedia.data('slidizle-timeout') || this.settings.timeout;
+		var t = this.$refs.currentSlide.data('slidizle-timeout') || this.settings.timeout;
 		if ( ! t) return null;
 		return t - this.current_timeout_time;
 	};
