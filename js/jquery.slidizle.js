@@ -1385,7 +1385,7 @@ Slidizle.prototype._extendSettings = function(options) {
 		$this = _this.$this;
 
 	// extend with options :
-	_this.settings = $.extend(_this.settings, options, true);
+	_this.settings = jQuery.extend(_this.settings, options, true);
 
 	// flatten an object with parent.child.child pattern :
 	var flattenObject = function(ob) {
@@ -1431,7 +1431,7 @@ Slidizle.prototype._extendSettings = function(options) {
 /**
  * jQuery bb_counter controller :
  */
-$.fn.slidizle = function(method) {
+jQuery.fn.slidizle = function(method) {
 
 	// check what to do :
 	if (Slidizle.prototype[method]) {
@@ -1466,7 +1466,7 @@ $.fn.slidizle = function(method) {
 		});
 	} else {
 		// error :
-		$.error( 'Method ' +  method + ' does not exist on jQuery.slidizle' );
+		jQuery.error( 'Method ' +  method + ' does not exist on jQuery.slidizle' );
 	}
 
 	// return this :
