@@ -1,4 +1,4 @@
-# jQuery.slidizle (1.3.23)
+# jQuery.slidizle (1.4.0)
 
 This plugin allows you to create fully customizable slider. Slidizle is focused on managing your slider by just applying some classes on each of your html elements so you can have the full control over your slider look.
 
@@ -32,7 +32,7 @@ You will need some html to describe your slider. This can be fully changed. You 
 
 ```html
 <div class="my-cool-slider" data-slidizle>
-	
+
 	<ul class="my-cool-slider-content" data-slidizle-content>
 		<li class="my-cool-slide">
 			Hello world
@@ -151,16 +151,16 @@ Here's the list of all the available options :
 
 ```javascript
 classes : {
-				
+
 	// class applied on content wrrapper
 	content 				: 'slidizle-content', 	
 
 	// class applied on next navigation element		
 	next 					: 'slidizle-next',			
-	
+
 	// class applied on previous navigation element
 	previous 				: 'slidizle-previous',			
-	
+
 	// class applied on all slides that are before the active one
 	beforeActive 			: 'before-active',
 
@@ -181,16 +181,16 @@ classes : {
 
 	// class applied on navigation element
 	navigation 				: 'slidizle-navigation',			
-	
+
 	// class applied on timer element
 	timer 					: 'slidizle-timer', // not documented		
-	
+
 	// class applied on each slide
 	slide 					: 'slidizle-slide',			
-	
+
 	// class applied on the next and previous navigation, or the all slider when disabled
 	disabled 				: 'disabled',				
-	
+
 	// the class applied on container when the slider is at his first slide
 	first 					: 'first',
 
@@ -199,19 +199,19 @@ classes : {
 
 	// the play class applied on the container
 	play 					: 'played',				
-	
+
 	// the pause class applied on the container
 	pause 		 			: 'paused',				
-	
+
 	// the stop class applied on the container
 	stop 					: 'stoped',				
-	
+
 	// an class to access the slider
 	slider 					: 'slidizle',				
-	
+
 	// the className to add to active navigation, slides, etc...
 	active 					: 'active',				
-	
+
 	// the className to add to the slider and slides when it is in loading mode
 	loading 				: 'loading'				
 },					
@@ -451,7 +451,7 @@ By default, slidizle will populate your data-slidizle-navigation with the corres
 
 ```html
 <div class="my-cool-slider" data-slidizle>
-	
+
 	<ul class="my-cool-slider-content" data-slidizle-content>
 		<li class="my-cool-slide">
 			Hello world
@@ -477,7 +477,7 @@ By default, slidizle will populate your data-slidizle-navigation with the corres
 
 ```html
 <div class="my-cool-slider" data-slidizle>
-	
+
 	<ul class="my-cool-slider-content" data-slidizle-content>
 		<li class="my-cool-slide" data-slidizle-slide-id="my-first-slide">
 			Hello world
